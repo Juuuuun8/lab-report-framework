@@ -19,7 +19,7 @@
 
 ## 2. 作業ディレクトリ
 
-CodexとAntigravityの作業ディレクトリには、必ずこのリポジトリのルートを指定する。
+Codexの作業ディレクトリには、必ずこのリポジトリのルートを指定する。任意でAntigravityを使う場合も同じルートを指定する。
 
 ```text
 lab-report-framework/          ← この階層を開く
@@ -66,15 +66,15 @@ TeX環境には、LuaLaTeX、LuaTeX-ja、Harano Ajiフォント、latexmk、お�
 
 ### `AGENTS.md`
 
-CodexとAntigravityがルートから自動発見する共通規約である。実習書の全読、質問、データ保全、出典検証、TeX作成、目視確認、Antigravity後の再監査を定める。
+Codexがルートから自動発見する、短い常設規約である。三つの承認境界、データ保全、出典検証、TeX、目視確認を定め、詳細規則は作業に応じて読む。
 
 ### `ANTIGRAVITY.md`
 
-Antigravityの詳細な日本語推敲契約である。`GEMINI.md` から明示的に読み込まれる。数値、単位、式、図表、コード、引用番号、断定の強さ、TeXレイアウトは変更してはならない。変更後はCodexが再監査する。
+任意でAntigravityを使う場合の日本語推敲契約である。数値、単位、式、図表、コード、引用番号、断定の強さ、TeXレイアウトは変更してはならない。変更後はCodexが再監査する。
 
 ### `GEMINI.md` と `.agents/skills/`
 
-Antigravityが公式の自動発見規則とSkill機構で日本語推敲契約へ到達するための入口である。SkillはPHASE 7だけで使い、技術内容の作成や修正には使わない。
+Antigravityを利用する場合に日本語推敲契約へ到達するための入口である。技術内容の作成や修正には使わない。
 
 ### `README.md`
 
@@ -106,6 +106,7 @@ YAMLファイルの期待構造をJSON Schemaで記述する。`validate_experim
 
 ### `scripts/`
 
+- `doctor.py`: Python依存、TeX、回帰テスト、完成例の再現性と承認状態を一括診断する。
 - `new_experiment.py`: 正規テンプレートを複製し、新しい実験を作る。
 - `workflow.py`: G1〜G3の確認票、承認ハッシュ、状態、提出版への昇格を管理する。
 - `reproduce.py`: 宣言済み分析コマンドを複製環境で再実行し、出力が一致するか検査する。
@@ -134,7 +135,7 @@ YAMLファイルの期待構造をJSON Schemaで記述する。`validate_experim
 
 ## 6. 新しい実験の作成
 
-リポジトリルートで実行する。
+通常はCodexへ実習書を渡し、「実験前に確認すべきことをまとめて」と依頼する。Codexが診断と作成を行う。次は内部で使うコマンドである。
 
 ```powershell
 python scripts/new_experiment.py sorting-2026 --title "ソートアルゴリズムの性能評価"
@@ -181,11 +182,10 @@ experiments/sorting-2026/
 ├─ HANDOFF.md
 ├─ SOURCE_AUDIT.md
 ├─ RESULT_TRACEABILITY.md
-├─ RUBRIC_TRACEABILITY.md
-├─ ORAL_DEFENSE.md
-├─ IMPROVEMENT_BACKLOG.yaml
 └─ WORKLOG.md
 ```
+
+`RUBRIC_TRACEABILITY.md` と `ORAL_DEFENSE.md` は必要な実験だけ追加する。改善候補は実験ごとの専用ファイルを作らず、実験固有なら `WORKLOG.md`、共通ならリポジトリ側で管理する。
 
 ## 7. 実習書を受け取った直後に行うこと
 
@@ -301,7 +301,7 @@ document:
 - 本文: 10.5 pt相当、明朝体。
 - 行送り: 約16.2 pt。
 - 見出し: ゴシック体。節は本文より一段大きく太字。
-- キャプション: 9 pt相当、明朝体、立体。
+- キャプション: 9 pt相当、明朝体、立体。一行は中央、複数行は左から読める整列。
 - コード: 等幅書体。
 - URL: 本文と調和する書体、黒色、枠なし、自然な折返し。
 - 本文字下げ: 1全角。
@@ -459,15 +459,15 @@ TeXでは原則として `[tbp]` を使う。参照したページに収まら�
 
 ### PHASE 6: 執筆・TeX
 
-`labreport` クラスの使用、禁止構造の不使用、プレースホルダ解消、図表のキャプションとラベル、本文先行参照、図下・表上・リスト上キャプション、`HANDOFF.md`、`RUBRIC_TRACEABILITY.md` を検査する。`[H]` と局所的な様式変更は、承認済み `STYLE_OVERRIDES.yaml` がない限り禁止である。
+`labreport` クラスの使用、禁止構造の不使用、プレースホルダ解消、図表のキャプションとラベル、本文先行参照、図下・表上・リスト上キャプション、`HANDOFF.md` を検査する。採点対応は内部の `QUALITY_REVIEW.yaml` で管理し、人間向け一覧が必要な場合だけ `RUBRIC_TRACEABILITY.md` を作る。`[H]` と局所的な様式変更は、承認済み `STYLE_OVERRIDES.yaml` がない限り禁止である。
 
 ### PHASE 7: 日本語推敲・再監査
 
-Antigravityの推敲前に `polish_guard.py snapshot`、推敲後に `polish_guard.py verify` を実行する。その後Codexが技術内容を再監査し、`WORKLOG.md` に `Codex再監査: 完了` を記録する。
+Codexが日本語と技術内容を再監査する。ユーザーがAntigravityによる第二校閲を希望した場合だけ、推敲前に `polish_guard.py snapshot`、推敲後に `polish_guard.py verify` を実行する。その後Codexが差分を再監査し、`WORKLOG.md` に `Codex再監査: 完了` を記録する。
 
 ### PHASE 8: 提出物固定
 
-最終候補PDFに対して、目視・技術検査を `FINAL_CHECK.yaml`、内容・採点基準監査を `QUALITY_REVIEW.yaml` で `passed` にし、表紙と本文を持つA4文書であることを検査する。G3でユーザーが個人情報、見た目、自分で説明できる内容、提出可否を確認する。G3承認後に限り `workflow.py release` が候補PDFと7つの補助成果物を `deliverables/` に固定する。
+最終候補PDFに対して、目視・技術検査を `FINAL_CHECK.yaml`、内容・採点基準監査を内部の `QUALITY_REVIEW.yaml` で `passed` にし、表紙と本文を持つA4文書であることを検査する。G3でユーザーが個人情報、見た目、自分で説明できる内容、提出可否を確認する。G3承認後に限り `workflow.py release` が候補PDFと4つの補助成果物を `deliverables/` に固定する。
 
 各段階の実行例:
 
@@ -537,16 +537,15 @@ python scripts/render_pdf.py `
 
 ## 25. 必須成果物
 
-`deliverables/` には最低限次を揃える。
+`deliverables/` には最低限次の5点を揃える。
 
 - `report.pdf`: 提出用レポート。
 - `HANDOFF.md`: 作業内容、意識した点、結果、本文への反映、未解決事項、再生成方法、提出物一覧。
 - `SOURCE_AUDIT.md`: 本文主張と出典の対応、確認位置、内容一致、採否理由。
 - `RESULT_TRACEABILITY.md`: 数値、図表、結論とデータ・処理の対応。
-- `RUBRIC_TRACEABILITY.md`: 採点項目、本文位置、証拠、判定の対応。
-- `ORAL_DEFENSE.md`: 本人が説明できるかを確認する想定問答。
-- `QUALITY_REVIEW.yaml`: 採点項目と内容品質の最終監査。
 - `WORKLOG.md`: 日時、担当、Phase、入力、実行、判断根拠、変更、異常、相談、検証。
+
+`RUBRIC_TRACEABILITY.md` と `ORAL_DEFENSE.md` は授業指定またはユーザー希望がある場合だけ追加する。`QUALITY_REVIEW.yaml` は内部監査資料であり、通常は提出物へ複製しない。
 
 必要に応じて分析コード、処理済みデータ、環境情報、検査ログも含める。ただし認証情報や不要な個人情報は入れない。
 
@@ -561,7 +560,7 @@ Codexが担当する:
 - TeXとPDF
 - 技術監査と提出可能性の判定
 
-Antigravityが担当できる:
+ユーザーが希望した場合だけAntigravityが担当できる:
 
 - 誤字脱字
 - 助詞と主語述語
@@ -571,7 +570,7 @@ Antigravityが担当できる:
 - 語順と段落接続
 - 用語表記の統一
 
-Antigravityは内容を追加せず、疑問は修正ではなく `QUESTIONS.md` への提案とする。作業は `GEMINI.md` と日本語推敲Skillから `ANTIGRAVITY.md` を読み、保護スナップショットを作ってから始める。Codexは返却差分を確認し、数値、単位、式、引用、断定の強さが変わっていないことを再監査する。
+Antigravityは内容を追加せず、疑問は修正ではなくCodexへの指摘とする。利用時は `ANTIGRAVITY.md` を読み、保護スナップショットを作ってから始める。Codexは返却差分を確認し、数値、単位、式、引用、断定の強さが変わっていないことを再監査する。
 
 ユーザーが担当する:
 
@@ -627,7 +626,7 @@ PythonスクリプトはAIではなく決定的な検査器である。存在、
 
 ### PHASE 8が通らない
 
-G3前なら `build/final-candidate.pdf`、G3後なら `deliverables/` の8ファイルを確認する。`FINAL_CHECK.yaml` の2つの `passed`、`QUALITY_REVIEW.yaml` の全項目、PDFのA4寸法も必要である。G3承認対象を修正した場合、古い承認は自動失効するため確認票からやり直す。
+G3前なら `build/final-candidate.pdf`、G3後なら `deliverables/` の必須5ファイルを確認する。内部の `FINAL_CHECK.yaml` の2つの `passed`、`QUALITY_REVIEW.yaml` の全項目、PDFのA4寸法も必要である。G3承認対象を修正した場合、古い承認は自動失効するため確認票からやり直す。
 
 ### TeXの警告が出る
 
@@ -655,7 +654,7 @@ python scripts/reproduce.py verify experiments/sorting-2026
 python scripts/workflow.py prepare-review experiments/sorting-2026 --gate G2
 python scripts/workflow.py approve experiments/sorting-2026 --gate G2 --decision "承認 G2"
 
-# 6. 執筆、必要ならAntigravity推敲、Codex再監査後に候補PDFを生成する
+# 6. 執筆、Codex再監査、必要ならAntigravity推敲後に候補PDFを生成する
 python scripts/build_report.py experiments/sorting-2026 --mode candidate
 python scripts/render_pdf.py experiments/sorting-2026/build/final-candidate.pdf experiments/sorting-2026/quality/rendered --dpi 180 --manifest experiments/sorting-2026/quality/RENDER_MANIFEST.yaml
 
@@ -667,7 +666,7 @@ python scripts/workflow.py approve experiments/sorting-2026 --gate G3 --decision
 python scripts/workflow.py release experiments/sorting-2026
 ```
 
-最終的に、PDFを見ただけでなく、ユーザーが `HANDOFF.md` から作業全体を理解でき、`SOURCE_AUDIT.md` から引用根拠を確認でき、`RESULT_TRACEABILITY.md` から数値を生データへたどれ、`RUBRIC_TRACEABILITY.md` と `QUALITY_REVIEW.yaml` から評価基準への対応を確認でき、`ORAL_DEFENSE.md` で本人の説明可能性を確かめ、`WORKLOG.md` から判断経緯を復元でき、G3承認が最新候補のハッシュへ結び付いた状態を完成とする。
+最終的に、ユーザーが `HANDOFF.md` から作業全体を理解でき、`SOURCE_AUDIT.md` から引用根拠を確認でき、`RESULT_TRACEABILITY.md` から数値を生データへたどれ、内部の `QUALITY_REVIEW.yaml` から評価基準への対応を確認でき、`WORKLOG.md` から判断経緯を復元でき、G3承認が最新候補のハッシュへ結び付いた状態を完成とする。
 
 ## 31. 3つの確認票と承認失効
 
@@ -685,7 +684,7 @@ python scripts/workflow.py release experiments/sorting-2026
 
 ## 33. 自律的な改善
 
-各レポートで見つかった改善候補は `IMPROVEMENT_BACKLOG.yaml` に最大3件まで残す。誤字、説明、検査追加など出力意味や様式を変えないL1変更は、回帰テストと `SYSTEM_CHANGELOG.md` の記録を伴う場合だけ自動適用できる。スキーマ、標準様式、役割、承認回数、出力意味を変えるL2変更は、影響、移行方法、戻し方を提示し、ユーザー承認後に実装する。進行中の承認済みレポートへ黙って適用しない。
+実験固有の改善候補は `WORKLOG.md`、共通システムの候補はリポジトリ側で管理する。誤字、説明、検査追加など出力意味や様式を変えないL1変更は、回帰テストと `SYSTEM_CHANGELOG.md` の記録を伴う場合だけ自動適用できる。スキーマ、標準様式、役割、承認回数、出力意味を変えるL2変更は、影響、移行方法、戻し方を提示し、ユーザー承認後に実装する。進行中の承認済みレポートへ黙って適用しない。
 
 ## 34. 状態確認
 

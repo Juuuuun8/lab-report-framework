@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import shutil
 import subprocess
 import sys
@@ -14,9 +13,11 @@ from pathlib import Path
 
 import yaml
 
+from workflow_core import content_fingerprint
+
 
 def digest(path: Path) -> tuple[str, int]:
-    return hashlib.sha256(path.read_bytes()).hexdigest(), path.stat().st_size
+    return content_fingerprint(path)
 
 
 def load_spec(experiment: Path) -> tuple[Path, dict]:
@@ -47,7 +48,11 @@ def seal(experiment: Path, path: Path, spec: dict) -> None:
             raise FileNotFoundError(f"expected output is missing: {output['path']}")
         output["sha256"], output["bytes"] = digest(target)
     spec["sealed_at"] = datetime.now().astimezone().isoformat(timespec="seconds")
-    path.write_text(yaml.safe_dump(spec, allow_unicode=True, sort_keys=False), encoding="utf-8")
+    path.write_text(
+        yaml.safe_dump(spec, allow_unicode=True, sort_keys=False),
+        encoding="utf-8",
+        newline="\n",
+    )
 
 
 def verify_current(experiment: Path, spec: dict) -> None:

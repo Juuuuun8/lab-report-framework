@@ -33,7 +33,9 @@ def main() -> int:
     meta = yaml.safe_load(meta_path.read_text(encoding="utf-8"))
     meta["cover"]["title"] = args.title
     meta_path.write_text(
-        yaml.safe_dump(meta, allow_unicode=True, sort_keys=False), encoding="utf-8"
+        yaml.safe_dump(meta, allow_unicode=True, sort_keys=False),
+        encoding="utf-8",
+        newline="\n",
     )
     subprocess.run(
         [sys.executable, str(root / "scripts" / "workflow.py"), "init", str(target)],

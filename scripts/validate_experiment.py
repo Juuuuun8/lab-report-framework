@@ -12,7 +12,7 @@ from pathlib import Path
 import yaml
 from jsonschema import Draft202012Validator, FormatChecker
 
-from workflow_core import approval_current
+from workflow_core import approval_current, content_fingerprint
 
 
 PLACEHOLDER = re.compile(r"\bTODO\b|指定待ち|未確認|未実施|\{\{.+?\}\}")
@@ -380,8 +380,9 @@ def validate(experiment: Path, phase: int, candidate: bool = False) -> Audit:
                 target.relative_to(experiment.resolve())
                 audit.file(target, f"PHASE 4: expected analysis output missing: {relative}")
                 if target.is_file():
-                    audit.require(hashlib.sha256(target.read_bytes()).hexdigest() == output.get("sha256"), f"PHASE 4: analysis output hash mismatch: {relative}")
-                    audit.require(target.stat().st_size == output.get("bytes"), f"PHASE 4: analysis output size mismatch: {relative}")
+                    actual_hash, actual_size = content_fingerprint(target)
+                    audit.require(actual_hash == output.get("sha256"), f"PHASE 4: analysis output hash mismatch: {relative}")
+                    audit.require(actual_size == output.get("bytes"), f"PHASE 4: analysis output size mismatch: {relative}")
             except ValueError:
                 audit.errors.append(f"PHASE 4: analysis output path escapes experiment: {relative}")
 
@@ -432,10 +433,12 @@ def validate(experiment: Path, phase: int, candidate: bool = False) -> Audit:
         allowed = {str(item.get("setting")) for item in overrides.get("overrides", [])}
         check_tex(experiment, audit, allowed)
         text_without_placeholders(experiment / "HANDOFF.md", audit, 6)
-        rubric_text = text_without_placeholders(experiment / "RUBRIC_TRACEABILITY.md", audit, 6)
         requirements = requirements or load_structured(experiment, "spec/ASSIGNMENT_REQUIREMENTS.yaml", audit)
-        for criterion in requirements.get("rubric_criteria", []):
-            audit.require(criterion.get("rubric_id") in rubric_text, f"PHASE 6: RUBRIC_TRACEABILITY lacks {criterion.get('rubric_id')}")
+        rubric_path = experiment / "RUBRIC_TRACEABILITY.md"
+        if rubric_path.is_file():
+            rubric_text = text_without_placeholders(rubric_path, audit, 6)
+            for criterion in requirements.get("rubric_criteria", []):
+                audit.require(criterion.get("rubric_id") in rubric_text, f"PHASE 6: RUBRIC_TRACEABILITY lacks {criterion.get('rubric_id')}")
         for claim in claims or load_structured(experiment, "spec/CLAIMS.yaml", audit).get("claims", []):
             audit.require(bool(claim.get("report_locator")), f"PHASE 6: claim {claim.get('claim_id')} has no report locator")
 
@@ -443,7 +446,11 @@ def validate(experiment: Path, phase: int, candidate: bool = False) -> Audit:
         worklog = experiment / "WORKLOG.md"
         text = worklog.read_text(encoding="utf-8") if worklog.is_file() else ""
         audit.require("Codex再監査: 完了" in text, "PHASE 7: Codex re-audit is not recorded as complete")
-        antigravity_not_used = "Antigravity変更受領: 完成例はCodex初稿のため変更なし" in text or "Antigravity変更受領: なし" in text
+        antigravity_not_used = any(marker in text for marker in (
+            "Antigravity利用: なし",
+            "Antigravity変更受領: 完成例はCodex初稿のため変更なし",
+            "Antigravity変更受領: なし",
+        ))
         baseline = experiment / "quality" / "POLISH_BASELINE.json"
         audit.require(antigravity_not_used or baseline.is_file(), "PHASE 7: polish baseline is required when Antigravity edited the report")
         if baseline.is_file():
@@ -457,17 +464,15 @@ def validate(experiment: Path, phase: int, candidate: bool = False) -> Audit:
             "HANDOFF.md",
             "SOURCE_AUDIT.md",
             "RESULT_TRACEABILITY.md",
-            "RUBRIC_TRACEABILITY.md",
-            "ORAL_DEFENSE.md",
             "WORKLOG.md",
         ]
         if candidate:
             for name in required_files:
                 audit.file(experiment / name, f"PHASE 8: missing candidate artifact {name}")
-            audit.file(experiment / "quality" / "QUALITY_REVIEW.yaml", "PHASE 8: missing candidate artifact QUALITY_REVIEW.yaml")
+            audit.file(experiment / "quality" / "QUALITY_REVIEW.yaml", "PHASE 8: missing internal quality review")
         else:
             base = experiment / "deliverables"
-            for name in [*required_files, "QUALITY_REVIEW.yaml", "report.pdf"]:
+            for name in [*required_files, "report.pdf"]:
                 audit.file(base / name, f"PHASE 8: missing deliverable {name}")
             approved, reason = approval_current(experiment, "G3")
             audit.require(approved, f"PHASE 8: {reason}")
@@ -495,14 +500,17 @@ def validate(experiment: Path, phase: int, candidate: bool = False) -> Audit:
         for requirement_id in required_requirements:
             audit.require(requirement_id in quality_text, f"PHASE 8: QUALITY_REVIEW lacks mandatory {requirement_id}")
 
-        oral = text_without_placeholders(experiment / "ORAL_DEFENSE.md", audit, 8)
-        audit.require(bool(re.search(r"\bO-[0-9]{3}\b", oral)), "PHASE 8: ORAL_DEFENSE has no completed questions")
+        oral_path = experiment / "ORAL_DEFENSE.md"
+        if oral_path.is_file():
+            oral = text_without_placeholders(oral_path, audit, 8)
+            audit.require(bool(re.search(r"\bO-[0-9]{3}\b", oral)), "PHASE 8: ORAL_DEFENSE has no completed questions")
         integrity = integrity or load_structured(experiment, "spec/ACADEMIC_INTEGRITY.yaml", audit)
         confirmations = integrity.get("confirmations", {})
         audit.require(confirmations.get("sources_not_fabricated") is True, "PHASE 8: source integrity is not confirmed")
         audit.require(confirmations.get("student_can_explain") is True, "PHASE 8: student understanding is not confirmed")
 
-        load_structured(experiment, "IMPROVEMENT_BACKLOG.yaml", audit)
+        if (experiment / "IMPROVEMENT_BACKLOG.yaml").is_file():
+            load_structured(experiment, "IMPROVEMENT_BACKLOG.yaml", audit)
         pdf = experiment / "build" / "final-candidate.pdf" if candidate else experiment / "deliverables" / "report.pdf"
         page_count = check_pdf_a4(pdf, audit) if pdf.is_file() else 0
         rendered_pages = final_check.get("visual_review", {}).get("rendered_pages")
@@ -543,12 +551,16 @@ def main() -> int:
         parser.error(f"not a directory: {experiment}")
 
     audit = validate(experiment, args.phase, candidate=args.candidate)
+    label = "最終候補検査" if args.candidate and args.phase == 8 else f"PHASE 0-{args.phase}"
     if audit.errors:
-        print(f"FAIL: PHASE 0-{args.phase}")
+        print(f"FAIL: {label}")
         for error in audit.errors:
             print(f"- {error}")
         return 1
-    print(f"PASS: PHASE 0-{args.phase}")
+    if args.candidate and args.phase == 8:
+        print("PASS: 最終候補検査（提出版の確定にはG3承認が必要）")
+    else:
+        print(f"PASS: {label}")
     for note in audit.notes:
         print(f"- {note}")
     return 0

@@ -9,6 +9,10 @@ from pathlib import Path
 
 import yaml
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+from workflow_core import gate_digest  # noqa: E402
+from workflow import packet_g1  # noqa: E402
+
 
 ROOT = Path(__file__).resolve().parents[1]
 SAMPLE = ROOT / "examples" / "sort-benchmark"
@@ -47,6 +51,15 @@ class QualityGateTests(unittest.TestCase):
     def test_completed_sample_passes_phase_7(self) -> None:
         result = run(VALIDATOR, SAMPLE, "--phase", "7")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_g1_summary_has_at_most_five_items(self) -> None:
+        self.assertLessEqual(len(packet_g1(SAMPLE)), 5)
+
+    def test_default_template_omits_optional_audit_documents(self) -> None:
+        template = ROOT / "templates" / "experiment"
+        self.assertFalse((template / "RUBRIC_TRACEABILITY.md").exists())
+        self.assertFalse((template / "ORAL_DEFENSE.md").exists())
+        self.assertFalse((template / "IMPROVEMENT_BACKLOG.yaml").exists())
 
     def test_external_claim_without_source_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
@@ -119,6 +132,26 @@ class QualityGateTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("differs from sealed output", result.stderr)
 
+    def test_text_output_line_endings_do_not_invalidate_seal_or_g2(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            experiment = self.clone_sample(Path(raw))
+            path = experiment / "data" / "processed" / "summary.csv"
+            text = path.read_text(encoding="utf-8")
+            path.write_bytes(text.replace("\r\n", "\n").replace("\n", "\r\n").encode("utf-8"))
+            result = run(VALIDATOR, experiment, "--phase", "6")
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_python_cache_does_not_change_gate_digest(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            experiment = self.clone_sample(Path(raw))
+            before, _ = gate_digest(experiment, "G2")
+            cache = experiment / "analysis" / "__pycache__"
+            cache.mkdir(exist_ok=True)
+            (cache / "analyze.cpython-test.pyc").write_bytes(b"machine-specific")
+            after, manifest = gate_digest(experiment, "G2")
+            self.assertEqual(before, after)
+            self.assertFalse(any("__pycache__" in str(item["path"]) for item in manifest))
+
     def test_release_is_blocked_when_g3_is_not_approved(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             experiment = self.clone_sample(Path(raw))
@@ -129,6 +162,24 @@ class QualityGateTests(unittest.TestCase):
             result = run(WORKFLOW, "release", experiment)
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("G3 has not been approved", result.stderr)
+
+    def test_release_contains_only_required_deliverables_by_default(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            experiment = self.clone_sample(Path(raw))
+            build = experiment / "build"
+            build.mkdir()
+            shutil.copy2(SAMPLE / "deliverables" / "report.pdf", build / "final-candidate.pdf")
+            deliverables = experiment / "deliverables"
+            deliverables.mkdir()
+            for legacy in ("QUALITY_REVIEW.yaml", "RUBRIC_TRACEABILITY.md", "ORAL_DEFENSE.md"):
+                (deliverables / legacy).write_text("legacy\n", encoding="utf-8")
+
+            result = run(WORKFLOW, "release", experiment)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual(
+                {path.name for path in deliverables.iterdir() if path.is_file()},
+                {"report.pdf", "HANDOFF.md", "SOURCE_AUDIT.md", "RESULT_TRACEABILITY.md", "WORKLOG.md"},
+            )
 
     def test_released_clone_verifies_without_ignored_build_directory(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

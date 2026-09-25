@@ -11,7 +11,7 @@
     "invariants": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["paper", "columns", "body_font_pt", "margins_mm", "figure_caption", "table_caption", "listing_caption", "cover_fields_alignment"],
+      "required": ["paper", "columns", "body_font_pt", "margins_mm", "figure_caption", "table_caption", "listing_caption", "cover_fields_alignment", "floats_cross_section", "multiline_caption"],
       "properties": {
         "paper": {"const": "A4"},
         "columns": {"const": 1},
@@ -20,7 +20,9 @@
         "figure_caption": {"const": "bottom"},
         "table_caption": {"const": "top"},
         "listing_caption": {"const": "top"},
-        "cover_fields_alignment": {"const": "centered_block"}
+        "cover_fields_alignment": {"const": "centered_block"},
+        "floats_cross_section": {"const": false},
+        "multiline_caption": {"const": "justified"}
       }
     },
     "change_control": {"type": "string", "minLength": 1}

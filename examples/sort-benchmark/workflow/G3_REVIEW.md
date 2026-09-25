@@ -6,11 +6,11 @@
 
 ## 要約
 
-- 最終候補PDF: build/final-candidate.pdf (175802 bytes)
+- 最終候補PDF: build/final-candidate.pdf (175808 bytes)
 - 採点基準: 3件、失敗: なし
 - 視覚確認: passed
 - 技術確認: passed
-- 詳細: HANDOFF.md、ORAL_DEFENSE.md、quality/QUALITY_REVIEW.yaml
+- 詳細: HANDOFF.md、quality/QUALITY_REVIEW.yaml
 
 ## あなたに確認してほしいこと
 
@@ -19,11 +19,9 @@
 3. 実際にしていないことや、自分で説明できない記述がないか。
 4. この最終候補を提出用PDFへ確定してよいか。
 
-## 承認対象
+## 技術記録
 
-- ファイル数: 19
-- SHA-256集合ダイジェスト: `bc54b14fdc1b8e95cf410ef0914d88a2dfcd50e6bb97b58c7c655c670678fd41`
-- 詳細一覧: `workflow/STATE.yaml` の該当ゲートと、このファイル作成時のGit差分を参照
+対象17ファイルの内容を固定しました。照合値は `workflow/STATE.yaml` に保存されています。
 
 ## 回答方法
 

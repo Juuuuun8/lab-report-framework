@@ -4,11 +4,11 @@ PHASE 0〜8はCodexが内部品質を落とさないための検査段階であ�
 
 | 承認 | 内部Phase | ユーザーが判断する内容 | 承認前に禁止すること |
 |---|---|---|---|
-| G1 実験契約 | 0〜2 | 課題解釈、提出条件、表紙、AI利用、実験計画 | 実験の開始 |
-| G2 証拠と論証方針 | 3〜5 | 実施事実、生データ、除外・逸脱、主要結果、考察方針 | 本文執筆 |
+| G1 実験前確認 | 0〜2 | 課題解釈、提出条件、表紙、AI利用、実験計画 | 実験の開始 |
+| G2 証拠・解釈確認 | 3〜5 | 実施事実、生データ、除外・逸脱、主要結果、考察方針 | 本文執筆 |
 | G3 提出 | 6〜8 | 個人情報、最終候補PDF、説明可能性、提出可否 | `deliverables/report.pdf` への昇格 |
 
-`workflow/G1_REVIEW.md` などの確認票は最大5項目の要約と、ユーザーにしか確認できない事項を示す。正常な検査ログをユーザーへ読ませない。承認時には対象ファイル一覧のSHA-256集合ダイジェストを `workflow/STATE.yaml` に固定する。承認対象の実質的内容が変われば承認は失効し、再確認が必要になる。OS間で意味のない改行コード差だけは正規化する。
+`workflow/G1_REVIEW.md` などの確認票は最大5項目の要約と、ユーザーにしか確認できない事項を示す。正常な検査ログ、ハッシュ、内部ファイル一覧をユーザーへ読ませない。承認時には対象ファイル一覧のSHA-256集合ダイジェストを内部の `workflow/STATE.yaml` に固定する。承認対象の実質的内容が変われば承認は失効し、再確認が必要になる。OS間で意味のない改行コード差とPythonキャッシュは承認対象から除外する。
 
 途中で新しい不確実性が生じた場合は、採点、実験条件、データ除外、再実験、安全、期限、費用、AI規則、結論に影響するときだけ相談する。それ以外はCodexが規則に従って処理し、次の承認票へ差分としてまとめる。
 
@@ -119,7 +119,7 @@ PHASE 0〜8はCodexが内部品質を落とさないための検査段階であ�
 - 実習書指定の構成で執筆する。
 - 図表、式、コード、引用を共通規則に従って配置する。
 - `HANDOFF.md` を含む補助成果物を更新する。
-- 採点項目を `RUBRIC_TRACEABILITY.md` で本文位置と証拠へ対応させる。
+- 採点項目を内部の `quality/QUALITY_REVIEW.yaml` で本文位置と証拠へ対応させる。人間向け一覧が必要な場合だけ `RUBRIC_TRACEABILITY.md` を作る。
 - 共通様式の変更は本文へ直接書かず、根拠と承認を `STYLE_OVERRIDES.yaml` に記録する。
 
 ゲート:
@@ -133,9 +133,10 @@ PHASE 0〜8はCodexが内部品質を落とさないための検査段階であ�
 
 作業:
 
-- Antigravity が `ANTIGRAVITY.md` の範囲だけで推敲する。
-- 推敲前に `polish_guard.py snapshot`、推敲後に `polish_guard.py verify` を実行する。
-- Codex が差分を再監査する。
+- 通常はCodexが日本語と技術内容を一体で監査する。
+- ユーザーが第二校閲を希望した場合だけ、Antigravityが `ANTIGRAVITY.md` の範囲で推敲する。
+- Antigravityを使う場合は、推敲前に `polish_guard.py snapshot`、推敲後に `polish_guard.py verify` を実行する。
+- Codexが最終差分を再監査する。
 
 ゲート:
 
@@ -154,7 +155,7 @@ PHASE 0〜8はCodexが内部品質を落とさないための検査段階であ�
 ゲート:
 
 - `report.pdf`、`HANDOFF.md`、`SOURCE_AUDIT.md`、`RESULT_TRACEABILITY.md`、`WORKLOG.md` が存在する。
-- `RUBRIC_TRACEABILITY.md`、`ORAL_DEFENSE.md`、`QUALITY_REVIEW.yaml` が存在する。
+- 内部の `quality/QUALITY_REVIEW.yaml` が存在する。`RUBRIC_TRACEABILITY.md` と `ORAL_DEFENSE.md` は必要な場合だけ作る。
 - 必須採点項目と8つの内容品質検査が合格している。
 - PDFのページ数、用紙サイズ、埋め込みフォント、リンク、本文抽出を確認済みである。
 - 視覚欠陥がない。

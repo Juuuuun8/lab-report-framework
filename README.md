@@ -1,108 +1,118 @@
 # lab-report-framework
 
-大学の理工系実験レポートを、根拠・再現性・追跡可能性を保ちながら作るためのフレームワークです。特定の過去レポートの見た目は継承せず、次の優先順位で判断します。
+大学の理工系実験レポートを、学生本人の判断を残しながら、Codexと再現可能な検査で作るためのローカル環境です。
 
-1. 当該授業の実習書、課題文、教員の指示
-2. このリポジトリの共通規則
-3. 情報処理学会の執筆作法と、日本の大学が公開する理工系レポート作成指針
-4. 一般的な技術文書の慣行
-
-上位の指示と下位の規則が衝突した場合は、上位を採用し、`USER_DECISIONS.yaml` と `WORKLOG.md` に理由を残します。
+この仕組みが保証するのは、課題要件の見落とし、数値転記、出典不一致、様式崩れなどを減らすことです。成績そのものは保証しません。内容の採否と提出判断は学生本人が行います。
 
 ## 作業ディレクトリ
 
-Codex と Antigravity のどちらも、**このリポジトリのルート**を作業ディレクトリに指定してください。個別実験のディレクトリを直接開くと、共通ルール、スキーマ、検査スクリプトを見落とします。
+GitHubから取得したフォルダのルートをCodexで開いてください。
 
 ```text
 lab-report-framework/          ← ここを開く
 ├─ AGENTS.md
-├─ ANTIGRAVITY.md
 ├─ rules/
-├─ schemas/
 ├─ scripts/
 ├─ tex/
 ├─ templates/
 └─ experiments/
 ```
 
-## 設計の要点
+`experiments/<実験名>/` を単独で開くと、共通規則と検査を読み込めません。
 
-- A4、1段組、本文10.5pt、本文は明朝、見出しはゴシック、余白25mmを標準とする。
-- 表紙はレイアウトだけを共通化し、項目と値は実験ごとに `spec/REPORT_META.yaml` で指定する。
-- 表紙の次は本文へ入り、タイトル、氏名、概要、キーワードを再掲しない。
-- 図表は本文で先に番号参照し、その後の近傍へ置く。ページ上端または下端へのフロートを基本とし、段落途中へ無理に割り込ませない。
-- 図キャプションは下、表とコードリストのキャプションは上。図表内は英語が必要な場合を除き日本語とする。
-- 参考文献は、実際に本文を開いて主張との一致を確認したものだけを採用する。優先順位は「日本語一次情報・公的機関・公式文書 → 英語一次情報 → 信頼できる日本語二次資料」。
-- レポート本文と同時に、`HANDOFF.md`、`SOURCE_AUDIT.md`、`RESULT_TRACEABILITY.md`、`RUBRIC_TRACEABILITY.md`、`ORAL_DEFENSE.md`、`QUALITY_REVIEW.yaml`、`WORKLOG.md` を完成させる。
-- 課題要件、採点基準、主張、実行環境、AI利用条件を構造化し、内容品質と学術的誠実性をPDF生成前のゲートで検査する。
-- 共通TeXクラスは `config/style-contract.yaml` で版と正規化ハッシュを固定し、意図しない様式変更を検出する。
-- Codex が実験、分析、TeX、技術監査を担当する。Antigravity は日本語推敲だけを担当し、変更後は Codex が再監査する。
-- ユーザーはG1・G2・G3の3回で、本人にしか確認できない事実と採否を判断する。各承認は対象ファイルのハッシュへ結び付くため、後から内容が変われば自動失効する。
-- Pythonスクリプトはハッシュ、スキーマ、数値対応、再生成、PDF技術条件を機械検査する。課題の意味、結果の解釈、論証、資料内容の評価にはCodexが必要であり、本人性の確認はユーザーだけが行う。
+## 使い方
 
-詳細は [設計根拠](rules/00-design-basis.md) と [PHASE 0〜8](rules/70-workflow-gates.md) を参照してください。
+### 1. 最初にCodexへ依頼する
 
-ディレクトリ構成、各YAML項目、レポート様式、全Phaseの具体的な進め方、検査内容、トラブル時の判断は [詳細利用ガイド](docs/USER_GUIDE.md) にまとめています。
+実習書、課題文、採点基準、配布データを渡し、次のように依頼します。
 
-## 新しい実験を始める
+> この実験のレポートを始めたい。実習書を全ページ読み、実験前に僕が確認すべきことをまとめて。
 
-Python 3.10 以上が必要です。依存ライブラリは `python -m pip install -r requirements.txt` で導入します。TeX をビルドする場合は LuaLaTeX と latexmk も使います。
+Codexがローカル環境を診断し、実験用フォルダとG1確認票を準備します。通常、ユーザーがPythonコマンドを実行する必要はありません。
+
+### 2. 三回だけ重要判断をする
+
+| 確認 | 時期 | ユーザーが確認すること |
+|---|---|---|
+| G1 実験前確認 | 実験前 | 課題解釈、提出条件、表紙、AI利用条件、実験計画 |
+| G2 証拠・解釈確認 | 実験・分析後 | 生データ、失敗・除外、主要結果、考察方針 |
+| G3 提出確認 | PDF完成後 | 個人情報、見た目、事実性、説明可能性、提出可否 |
+
+Codexは各回、確認してほしい点を短い確認票として示します。問題なければ `承認 G1`、`承認 G2`、`承認 G3` と回答します。修正があれば、その場で内容を伝えます。
+
+### 3. 完成物を受け取る
+
+`experiments/<実験名>/deliverables/` に次の5点が固定されます。
+
+- `report.pdf`: 提出用レポート
+- `HANDOFF.md`: 何を行い、何を意識し、何が未解決か
+- `SOURCE_AUDIT.md`: どの主張を、どの出典のどこで確認したか
+- `RESULT_TRACEABILITY.md`: 数値・図表・結論と生データ・処理の対応
+- `WORKLOG.md`: 判断と作業の履歴
+
+採点対応表や口頭試問用資料は、授業で必要な場合またはユーザーが希望した場合だけ追加します。
+
+## ユーザーとAIの分担
+
+ユーザーが確認するのは、本人にしか分からないことです。
+
+- 実際に行った条件、失敗、除外、やり直し
+- 氏名、学生番号、科目、日付、締切
+- 結果と考察が自分の理解に合うか
+- PDFが読みやすいか
+- 自分の言葉で説明できるか
+
+Codexは、実習書読解、質問整理、分析、出典本文の照合、執筆、TeX、PDF、内容監査を担当します。Pythonはハッシュ、再生成、構造、数値対応、PDF寸法など、意味理解を必要としない検査だけを担当します。
+
+Antigravityは必須ではありません。別の日本語校閲を希望した場合だけ使い、変更後はCodexが数値・意味・引用を再確認します。
+
+## 標準様式
+
+実習書に指定がない場合は次を使います。
+
+- A4、1段組、本文10.5pt相当、余白25mm
+- 本文明朝、見出しゴシック、ページ番号のみ
+- 表紙の次はいきなり本文。タイトル、氏名、概要、キーワードを再掲しない
+- 表紙項目は実験ごとに指定し、項目ブロック全体を中央配置
+- 図表は本文で先に参照し、その後の近傍へ配置
+- ページ上端・下端を基本とし、節境界を越えさせない
+- 図キャプションは下、表とコードのキャプションは上
+- 一行キャプションは中央、複数行は本文と同様に整える
+- 軸、凡例、表見出しは、英語が必要でない限り日本語
+- URLは本文と同系統の書体・黒色・枠なしで、余白内に折り返す
+
+詳細は `rules/10-layout-and-typography.md`、`rules/20-figures-and-tables.md`、`rules/30-equations-and-code.md` にあります。
+
+## 出典
+
+検索結果やAI要約だけでは採用しません。実際に本文を開き、該当箇所がレポートの主張を支えることを確認します。
+
+優先順位は次のとおりです。
+
+1. 日本語の一次情報、公的機関、公式文書
+2. 英語の一次情報、公式文書
+3. 信頼できる日本語の二次資料
+
+出典が不要な実験では、数を増やすためだけに参考文献を追加しません。
+
+## ローカル診断
+
+Codexは開始時に次を実行します。ユーザーが問題を調べたい場合だけ直接実行してください。
 
 ```powershell
-python scripts/new_experiment.py example-id --title "実験題目"
-python scripts/validate_experiment.py experiments/example-id --phase 0
+python scripts/doctor.py
 ```
 
-`experiments/example-id/instructions/` に実習書を置き、**実習書を全ページ読んでから** `QUESTIONS.md` を作成します。ユーザー回答を `spec/USER_DECISIONS.yaml` に保存し、G1を承認するまで実験を開始しません。
+Python依存、TeX、回帰テスト、完成例の再現性、承認状態をまとめて確認します。短い依存確認だけなら `--quick` を付けます。
 
-```powershell
-python scripts/workflow.py refresh-context experiments/example-id
-python scripts/workflow.py prepare-review experiments/example-id --gate G1
-# ユーザーが確認票を読み、チャットで「承認 G1」と回答した後だけ実行
-python scripts/workflow.py approve experiments/example-id --gate G1 --decision "承認 G1"
-```
+## GitHub Actions
 
-実験後は生データを封印し、分析結果を別環境で再生成できることを確認してからG2へ進みます。
+普段のレポート作成には使いません。GitHub上の `quality` は手動実行専用で、フレームワーク自体を変更したときの別環境確認に使います。複数PCや共同開発へ移行した場合だけ、自動実行を再検討します。
 
-```powershell
-python scripts/workflow.py seal-data experiments/example-id
-python scripts/reproduce.py seal experiments/example-id
-python scripts/workflow.py prepare-review experiments/example-id --gate G2
-# 「承認 G2」の本人回答後に approve を実行
-```
+## 内部構造
 
-G2後に執筆・Antigravity推敲・Codex再監査を行い、最終候補を作ります。候補と提出版は別物です。
+`spec/`、`quality/`、`workflow/`、PHASE 0〜8は監査と再現性のための内部実装です。通常はCodexが管理し、ユーザーは三つの確認票だけを読みます。
 
-```powershell
-python scripts/build_report.py experiments/example-id --mode candidate
-python scripts/render_pdf.py experiments/example-id/build/final-candidate.pdf experiments/example-id/quality/rendered --dpi 180 --manifest experiments/example-id/quality/RENDER_MANIFEST.yaml
-python scripts/workflow.py prepare-review experiments/example-id --gate G3
-# 「承認 G3」の本人回答後だけ提出版へ昇格
-python scripts/workflow.py release experiments/example-id
-```
+内部の詳しい仕様、全ファイル、検査条件、トラブル対応は [詳細利用ガイド](docs/USER_GUIDE.md) を参照してください。
 
-`build/draft.pdf` は作業用、`build/final-candidate.pdf` は本人確認用、`deliverables/report.pdf` だけがG3承認済みの提出版です。
-
-## PHASE 0〜8
-
-| Phase | 目的 | 完了条件の要約 |
-|---:|---|---|
-| 0 | 受領・保全 | 実習書と入力物の一覧、ハッシュ、欠落確認 |
-| 1 | 要求理解・事前質問 | 実習書全読、`QUESTIONS.md`、回答済み `USER_DECISIONS.yaml` |
-| 2 | 実験計画・G1 | 手順、変数、反復回数、停止条件、分析法を本人が承認 |
-| 3 | 実験実行 | 生データを不変保存し、環境と逸脱を記録 |
-| 4 | 分析 | 生データから再現可能な処理で表・図・統計量を生成 |
-| 5 | 出典検証・G2 | 各外部主張と出典本文の対応、証拠と論証方針を本人が承認 |
-| 6 | 執筆・TeX | 規則に沿って本文と図表を作成 |
-| 7 | 日本語推敲・再監査 | Antigravity 推敲後に Codex が意味・数値・引用を再検証 |
-| 8 | G3・提出物固定 | 最終候補を本人が承認した後だけ提出版へ昇格 |
-
-ゲートの具体的な必須項目は `rules/70-workflow-gates.md` と `scripts/validate_experiment.py` が正です。
-
-## サンプル
-
-`examples/sort-benchmark/` に、架空データを用いた完成例があります。内容はテンプレートの表示確認用であり、実在する学生の成果物ではありません。
-
-## 根拠資料
-
-共通規則の作成時には、情報処理学会の原稿執筆案内、北里大学、名古屋大学、愛媛大学の公開資料を実際に開いて該当箇所を確認しました。どの資料から何を採用し、何を採用しなかったかは `rules/00-design-basis.md` に記録しています。
+完成例は `examples/sort-benchmark/` にあります。架空データによる表示・回帰検証用であり、実在する学生の提出物ではありません。

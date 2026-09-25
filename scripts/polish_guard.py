@@ -61,7 +61,11 @@ def main() -> int:
     baseline = baseline_path(experiment)
     if args.mode == "snapshot":
         baseline.parent.mkdir(exist_ok=True)
-        baseline.write_text(json.dumps(current, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        baseline.write_text(
+            json.dumps(current, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+            newline="\n",
+        )
         print(baseline)
         return 0
 

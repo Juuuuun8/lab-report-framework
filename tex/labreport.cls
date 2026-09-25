@@ -1,5 +1,5 @@
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{labreport}[2026/09/24 Neutral Japanese university lab report]
+\ProvidesClass{labreport}[2026/09/26 Neutral Japanese university lab report]
 
 \LoadClass[a4paper,10pt,oneside]{ltjsarticle}
 
@@ -14,6 +14,7 @@
 \RequirePackage{array}
 \RequirePackage{graphicx}
 \RequirePackage{flafter}
+\RequirePackage[section]{placeins}
 \RequirePackage{amsmath}
 \RequirePackage{siunitx}
 \RequirePackage{xurl}
@@ -49,7 +50,7 @@
   font={small,rm},
   labelfont=normalfont,
   labelsep=quad,
-  justification=centering,
+  justification=justified,
   singlelinecheck=true,
   skip=6pt
 }

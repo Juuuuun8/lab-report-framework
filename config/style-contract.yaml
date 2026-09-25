@@ -1,6 +1,6 @@
-revision: 1
+revision: 2
 class_path: "tex/labreport.cls"
-normalized_sha256: "e8291b35b904bb7bd564411ca5fb48fcf7e9ac16bb27fd8dd26aee4b97a82abc"
+normalized_sha256: "186dc5d5f54ca7e039a7538ddbb7b67d0ab3aaef51f707ef29ea8e28d724d81f"
 invariants:
   paper: A4
   columns: 1
@@ -10,4 +10,6 @@ invariants:
   table_caption: top
   listing_caption: top
   cover_fields_alignment: centered_block
+  floats_cross_section: false
+  multiline_caption: justified
 change_control: "共通様式を変更した場合は、完成例の全ページ目視確認、PHASE 8合格、revision更新後にのみnormalized_sha256を更新する。"

@@ -51,7 +51,11 @@ def main() -> int:
             "page_count": len(pages),
             "pages": pages,
         }
-        args.manifest.write_text(yaml.safe_dump(manifest, allow_unicode=True, sort_keys=False), encoding="utf-8")
+        args.manifest.write_text(
+            yaml.safe_dump(manifest, allow_unicode=True, sort_keys=False),
+            encoding="utf-8",
+            newline="\n",
+        )
         print(args.manifest)
     return 0
 

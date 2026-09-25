@@ -44,7 +44,6 @@ python scripts/workflow.py release examples/sort-benchmark
 - `deliverables/HANDOFF.md`
 - `deliverables/SOURCE_AUDIT.md`
 - `deliverables/RESULT_TRACEABILITY.md`
-- `deliverables/RUBRIC_TRACEABILITY.md`
-- `deliverables/ORAL_DEFENSE.md`
-- `deliverables/QUALITY_REVIEW.yaml`
 - `deliverables/WORKLOG.md`
+
+採点対応と内容品質の詳細は内部の `quality/QUALITY_REVIEW.yaml` に保存した。

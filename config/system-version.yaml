@@ -1,6 +1,6 @@
-version: "4.0.0"
+version: "5.0.0"
 workflow: "three-gate-human-approved"
-released_at: "2026-09-25"
+released_at: "2026-09-26"
 compatibility:
-  experiment_schema: 2
-  style_contract_revision: 1
+  experiment_schema: 3
+  style_contract_revision: 2

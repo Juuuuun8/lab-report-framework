@@ -11,8 +11,8 @@ import yaml
 
 GATES = ("G1", "G2", "G3")
 GATE_TITLES = {
-    "G1": "実験契約",
-    "G2": "証拠と論証方針",
+    "G1": "実験前確認",
+    "G2": "証拠・解釈確認",
     "G3": "提出",
 }
 
@@ -52,6 +52,8 @@ GATE_PATHS = {
 }
 
 TEXT_SUFFIXES = {".md", ".tex", ".yaml", ".yml", ".json", ".csv", ".txt", ".dat", ".py"}
+IGNORED_PARTS = {"__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
+IGNORED_SUFFIXES = {".pyc", ".pyo"}
 
 
 def state_path(experiment: Path) -> Path:
@@ -75,15 +77,23 @@ def load_state(experiment: Path) -> dict:
 def write_state(experiment: Path, state: dict) -> None:
     path = state_path(experiment)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(yaml.safe_dump(state, allow_unicode=True, sort_keys=False), encoding="utf-8")
+    path.write_text(
+        yaml.safe_dump(state, allow_unicode=True, sort_keys=False),
+        encoding="utf-8",
+        newline="\n",
+    )
 
 
-def _file_digest(path: Path) -> str:
+def normalized_payload(path: Path) -> bytes:
+    """Return stable bytes for auditable content across Windows and Unix."""
     if path.suffix.lower() in TEXT_SUFFIXES:
-        payload = path.read_text(encoding="utf-8").replace("\r\n", "\n").encode("utf-8")
-    else:
-        payload = path.read_bytes()
-    return hashlib.sha256(payload).hexdigest()
+        return path.read_text(encoding="utf-8").replace("\r\n", "\n").replace("\r", "\n").encode("utf-8")
+    return path.read_bytes()
+
+
+def content_fingerprint(path: Path) -> tuple[str, int]:
+    payload = normalized_payload(path)
+    return hashlib.sha256(payload).hexdigest(), len(payload)
 
 
 def gate_files(experiment: Path, gate: str) -> list[Path]:
@@ -95,30 +105,35 @@ def gate_files(experiment: Path, gate: str) -> list[Path]:
         elif candidate.is_dir():
             files.extend(
                 item for item in candidate.rglob("*")
-                if item.is_file() and item.name != ".gitkeep" and "rendered" not in item.parts
+                if item.is_file()
+                and item.name != ".gitkeep"
+                and "rendered" not in item.parts
+                and not (set(item.parts) & IGNORED_PARTS)
+                and item.suffix.lower() not in IGNORED_SUFFIXES
             )
     return sorted(set(files), key=lambda item: item.relative_to(experiment).as_posix())
 
 
 def gate_manifest(experiment: Path, gate: str) -> list[dict[str, object]]:
-    manifest = [
-        {
+    manifest = []
+    for path in gate_files(experiment, gate):
+        digest, size = content_fingerprint(path)
+        manifest.append({
             "path": path.relative_to(experiment).as_posix(),
-            "sha256": _file_digest(path),
-            "bytes": path.stat().st_size,
-        }
-        for path in gate_files(experiment, gate)
-    ]
+            "sha256": digest,
+            "bytes": size,
+        })
     # build/ is intentionally ignored by Git. After release, a clean clone can
     # therefore use the byte-identical released PDF as the logical candidate
     # artifact when verifying the recorded G3 approval.
     if gate == "G3" and not any(item["path"] == "build/final-candidate.pdf" for item in manifest):
         released = experiment / "deliverables" / "report.pdf"
         if released.is_file():
+            digest, size = content_fingerprint(released)
             manifest.append({
                 "path": "build/final-candidate.pdf",
-                "sha256": _file_digest(released),
-                "bytes": released.stat().st_size,
+                "sha256": digest,
+                "bytes": size,
             })
             manifest.sort(key=lambda item: str(item["path"]))
     return manifest

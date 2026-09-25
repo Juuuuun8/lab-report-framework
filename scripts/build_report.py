@@ -47,7 +47,9 @@ def generate_meta(experiment: Path) -> None:
     ]
     for field in cover["fields"]:
         lines.append(rf"\reportfield{{{tex_escape(field['label'])}}}{{{tex_escape(field['value'])}}}")
-    (experiment / "report" / "meta.tex").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (experiment / "report" / "meta.tex").write_text(
+        "\n".join(lines) + "\n", encoding="utf-8", newline="\n"
+    )
 
 
 def main() -> int:
@@ -89,7 +91,23 @@ def main() -> int:
         f"-outdir={build_dir}",
         "main.tex",
     ]
-    subprocess.run(command, cwd=report_dir, env=env, check=True)
+    print("PDFを生成しています。初回はフォント準備のため数分かかることがあります。")
+    result = subprocess.run(
+        command,
+        cwd=report_dir,
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+    latexmk_output = build_dir / "latexmk-output.log"
+    latexmk_output.write_bytes(result.stdout)
+    if result.returncode != 0:
+        tail = result.stdout.decode(errors="replace").splitlines()[-25:]
+        raise RuntimeError(
+            "PDF生成に失敗しました。詳細は build/latexmk-output.log を確認してください。\n"
+            + "\n".join(tail)
+        )
 
     pdf = build_dir / "main.pdf"
     log = build_dir / "main.log"
@@ -112,4 +130,8 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except (FileNotFoundError, RuntimeError, subprocess.CalledProcessError) as exc:
+        print(f"エラー: {exc}", file=sys.stderr)
+        raise SystemExit(1) from None

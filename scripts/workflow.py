@@ -97,10 +97,8 @@ def packet_g1(experiment: Path) -> list[str]:
     integrity = load_yaml(experiment / "spec" / "ACADEMIC_INTEGRITY.yaml")
     assignment = req.get("assignment", {})
     lines = [
-        f"- 科目: {assignment.get('course')}",
-        f"- 課題: {assignment.get('title')}",
-        f"- 提出形式: {assignment.get('submission_format')}",
-        f"- 要求数: {len(req.get('requirements', []))}、採点基準数: {len(req.get('rubric_criteria', []))}",
+        f"- 科目・課題: {assignment.get('course')} / {assignment.get('title')}",
+        f"- 提出形式・確認項目: {assignment.get('submission_format')} / 要求{len(req.get('requirements', []))}件・採点基準{len(req.get('rubric_criteria', []))}件",
         f"- AI利用状態: {integrity.get('ai_use', {}).get('status')}",
         f"- 実験目的: {plan.get('objective')}",
         f"- 反復回数: {plan.get('replications')}、表紙項目数: {len(meta.get('cover', {}).get('fields', []))}",
@@ -135,7 +133,7 @@ def packet_g3(experiment: Path) -> list[str]:
         f"- 採点基準: {len(rubric)}件、失敗: {', '.join(failed) if failed else 'なし'}",
         f"- 視覚確認: {final.get('visual_review', {}).get('status')}",
         f"- 技術確認: {final.get('technical_review', {}).get('status')}",
-        "- 詳細: HANDOFF.md、ORAL_DEFENSE.md、quality/QUALITY_REVIEW.yaml",
+        "- 詳細: HANDOFF.md、quality/QUALITY_REVIEW.yaml",
     ]
 
 
@@ -160,7 +158,7 @@ USER_CHECKS = {
 }
 
 
-def build_review(experiment: Path, gate: str, digest: str, manifest: list[dict]) -> str:
+def build_review(experiment: Path, gate: str, manifest: list[dict]) -> str:
     lines = [
         f"# {gate}: {GATE_TITLES[gate]}の確認",
         "",
@@ -176,11 +174,9 @@ def build_review(experiment: Path, gate: str, digest: str, manifest: list[dict])
         "",
         *[f"{index}. {item}" for index, item in enumerate(USER_CHECKS[gate], 1)],
         "",
-        "## 承認対象",
+        "## 技術記録",
         "",
-        f"- ファイル数: {len(manifest)}",
-        f"- SHA-256集合ダイジェスト: `{digest}`",
-        "- 詳細一覧: `workflow/STATE.yaml` の該当ゲートと、このファイル作成時のGit差分を参照",
+        f"対象{len(manifest)}ファイルの内容を固定しました。照合値は `workflow/STATE.yaml` に保存されています。",
         "",
         "## 回答方法",
         "",
@@ -205,12 +201,18 @@ def release(experiment: Path) -> None:
         "HANDOFF.md",
         "SOURCE_AUDIT.md",
         "RESULT_TRACEABILITY.md",
-        "RUBRIC_TRACEABILITY.md",
-        "ORAL_DEFENSE.md",
         "WORKLOG.md",
     ]:
         shutil.copy2(experiment / name, deliverables / name)
-    shutil.copy2(experiment / "quality" / "QUALITY_REVIEW.yaml", deliverables / "QUALITY_REVIEW.yaml")
+    # 課程や本人の希望に応じた補助資料は、存在する場合だけ同梱する。
+    for name in ["RUBRIC_TRACEABILITY.md", "ORAL_DEFENSE.md"]:
+        optional = experiment / name
+        if optional.is_file():
+            shutil.copy2(optional, deliverables / name)
+        else:
+            (deliverables / name).unlink(missing_ok=True)
+    # v4以前に提出物へ複製していた内部監査ファイルを残さない。
+    (deliverables / "QUALITY_REVIEW.yaml").unlink(missing_ok=True)
     subprocess.run(
         [sys.executable, str(repo_root() / "scripts" / "validate_experiment.py"), str(experiment), "--phase", "8"],
         cwd=repo_root(),
@@ -274,7 +276,11 @@ def main() -> int:
             if not target.is_file():
                 raise FileNotFoundError(document["path"])
             document["sha256"] = hashlib.sha256(target.read_bytes()).hexdigest()
-        path.write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False), encoding="utf-8")
+        path.write_text(
+            yaml.safe_dump(data, allow_unicode=True, sort_keys=False),
+            encoding="utf-8",
+            newline="\n",
+        )
         print(path)
         return 0
 
@@ -293,15 +299,19 @@ def main() -> int:
                 raw_file["sha256"] = hashlib.sha256(target.read_bytes()).hexdigest()
                 raw_file["bytes"] = target.stat().st_size
         data["sealed_at"] = now()
-        path.write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False), encoding="utf-8")
+        path.write_text(
+            yaml.safe_dump(data, allow_unicode=True, sort_keys=False),
+            encoding="utf-8",
+            newline="\n",
+        )
         print(path)
         return 0
 
     if args.command == "status":
-        print(f"gate={state.get('current_gate')} status={state.get('status')}")
+        print(f"現在: {state.get('current_gate')} / {state.get('status')}")
         for gate in GATES:
             ok, reason = approval_current(experiment, gate)
-            print(f"{gate}: {'current' if ok else state['gates'][gate]['status']} - {reason}")
+            print(f"{gate}: {'有効' if ok else state['gates'][gate]['status']} - {reason}")
         return 0
 
     if args.command == "prepare-review":
@@ -312,7 +322,11 @@ def main() -> int:
         digest, manifest = gate_digest(experiment, args.gate)
         packet = review_path(experiment, args.gate)
         packet.parent.mkdir(parents=True, exist_ok=True)
-        packet.write_text(build_review(experiment, args.gate, digest, manifest), encoding="utf-8")
+        packet.write_text(
+            build_review(experiment, args.gate, manifest),
+            encoding="utf-8",
+            newline="\n",
+        )
         gate_state = state["gates"][args.gate]
         gate_state.update({
             "status": "awaiting_user",
@@ -355,7 +369,7 @@ def main() -> int:
         state["current_gate"] = GATES[index + 1] if index + 1 < len(GATES) else "complete"
         state["status"] = "executing" if args.gate != "G3" else "approved"
         write_state(experiment, state)
-        print(f"approved {args.gate}: {current}")
+        print(f"{args.gate}を承認済みとして記録しました。")
         return 0
 
     if args.command == "verify":
@@ -375,4 +389,8 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except (FileNotFoundError, RuntimeError, ValueError, subprocess.CalledProcessError) as exc:
+        print(f"エラー: {exc}", file=sys.stderr)
+        raise SystemExit(1) from None

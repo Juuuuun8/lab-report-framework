@@ -34,7 +34,11 @@ def main() -> None:
         })
 
     with (PROCESSED / "summary.csv").open("w", encoding="utf-8", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=["n", "algorithm", "mean_ms", "sd_ms", "trials"])
+        writer = csv.DictWriter(
+            stream,
+            fieldnames=["n", "algorithm", "mean_ms", "sd_ms", "trials"],
+            lineterminator="\n",
+        )
         writer.writeheader()
         for row in rows:
             writer.writerow({**row, "mean_ms": f"{row['mean_ms']:.4f}", "sd_ms": f"{row['sd_ms']:.4f}"})
@@ -59,7 +63,9 @@ def main() -> None:
         quick = by_key[(n, "quick")]["mean_ms"]
         lines.append(f"{n:,} & {bubble:.2f} & {quick:.3f} & {bubble / quick:.1f}" + row_end)
     lines.extend([r"\bottomrule", r"\end{tabular}"])
-    (GENERATED / "summary_table.tex").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (GENERATED / "summary_table.tex").write_text(
+        "\n".join(lines) + "\n", encoding="utf-8", newline="\n"
+    )
 
 
 if __name__ == "__main__":

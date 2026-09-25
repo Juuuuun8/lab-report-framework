@@ -35,7 +35,6 @@ python scripts/workflow.py release experiments/<id>
 - `deliverables/HANDOFF.md`
 - `deliverables/SOURCE_AUDIT.md`
 - `deliverables/RESULT_TRACEABILITY.md`
-- `deliverables/RUBRIC_TRACEABILITY.md`
-- `deliverables/ORAL_DEFENSE.md`
-- `deliverables/QUALITY_REVIEW.yaml`
 - `deliverables/WORKLOG.md`
+
+授業指定または本人希望がある場合だけ、採点対応表や口頭試問資料を追加する。
