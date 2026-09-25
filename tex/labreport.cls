@@ -120,7 +120,7 @@
     {\fontsize{22pt}{31pt}\selectfont\sffamily\bfseries \ReportTitle\par}
     \ifstrempty{\ReportSubtitle}{}{\vspace{5mm}{\large\sffamily \ReportSubtitle\par}}
     \vfill
-    \begin{tabular}{@{}>{\sffamily\bfseries\raggedleft\arraybackslash}p{7em}@{\hspace{1.5em}}>{\raggedright\arraybackslash}p{18em}@{}}
+    \begin{tabular}{@{}>{\sffamily\bfseries}r@{\hspace{1.5em}}l@{}}
       \ReportFields
     \end{tabular}
     \vspace*{16mm}
