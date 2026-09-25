@@ -1,0 +1,11 @@
+visual_review:
+  status: passed
+  reviewer: "Codex"
+  reviewed_at: "2026-09-25T14:19:34+09:00"
+  rendered_pages: 3
+  notes: "全3ページを再画像化して確認。表紙の項目ブロックはページ中央、リストキャプションはコード上に配置されている。表は本文の初回参照後、図は次ページ上端にあり、段落の分断、重なり、欠け、軸ラベルの崩れはない。"
+technical_review:
+  status: passed
+  reviewer: "Codex"
+  reviewed_at: "2026-09-25T14:19:34+09:00"
+  notes: "更新後もPHASE 0〜7検証合格。PDFはA4・3ページで、未解決参照、Overfull/Underfull、重複リンク先を検出しなかった。リストのキャプション、ラベル、本文先行参照も自動検査対象に追加した。"

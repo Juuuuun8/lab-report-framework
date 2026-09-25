@@ -1,0 +1,39 @@
+\section{結果}
+
+各条件の平均実行時間を表~\ref{tab:timing}に示す．入力サイズ8,000件では，バブルソートの平均は\SI{194.74}{ms}，クイックソートの平均は\SI{2.372}{ms}であり，両者の比は82.1であった．
+
+\begin{table}[tbp]
+  \centering
+  \caption{入力サイズ別の平均実行時間（各5回の架空データ）}
+  \label{tab:timing}
+  \input{generated/summary_table.tex}
+\end{table}
+
+入力サイズと平均実行時間の関係を図~\ref{fig:timing}に示す．縦軸は両系列を同時に比較できるよう対数目盛とした．全条件でバブルソートの平均実行時間がクイックソートを上回り，入力サイズの増加とともに差が広がった．
+
+\begin{figure}[tbp]
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[
+      width=0.82\textwidth,
+      height=62mm,
+      xlabel={入力サイズ $n$（千件）},
+      ylabel={平均実行時間（ms）},
+      ymode=log,
+      log basis y=10,
+      xtick={1,2,4,8},
+      grid=major,
+      grid style={black!15},
+      legend style={draw=none,fill=none,at={(0.03,0.97)},anchor=north west},
+      tick label style={font=\small},
+      label style={font=\small},
+    ]
+      \addplot[black,thick,mark=*] table[x=n_thousands,y=mean_ms]{generated/bubble.dat};
+      \addlegendentry{バブルソート}
+      \addplot[black!60,thick,dashed,mark=square*] table[x=n_thousands,y=mean_ms]{generated/quick.dat};
+      \addlegendentry{クイックソート}
+    \end{axis}
+  \end{tikzpicture}
+  \caption{入力サイズと平均実行時間の関係}
+  \label{fig:timing}
+\end{figure}

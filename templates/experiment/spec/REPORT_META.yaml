@@ -1,0 +1,22 @@
+cover:
+  course_name: "科目名を指定"
+  title: "実験題目を指定"
+  subtitle: ""
+  fields:
+    - label: "所属"
+      value: "指定待ち"
+    - label: "学生番号"
+      value: "指定待ち"
+    - label: "氏名"
+      value: "指定待ち"
+    - label: "実験日"
+      value: "指定待ち"
+    - label: "提出日"
+      value: "指定待ち"
+document:
+  language: ja
+  paper: A4
+  columns: 1
+  body_font_pt: 10.5
+  punctuation: "，．"
+

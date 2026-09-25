@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/lab-report/report-meta.schema.json",
+  "title": "REPORT_META.yaml",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["cover", "document"],
+  "properties": {
+    "cover": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["course_name", "title", "fields"],
+      "properties": {
+        "course_name": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "subtitle": {"type": "string"},
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["label", "value"],
+            "properties": {
+              "label": {"type": "string", "minLength": 1},
+              "value": {"type": "string", "minLength": 1}
+            }
+          }
+        }
+      }
+    },
+    "document": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["language", "paper", "columns", "body_font_pt"],
+      "properties": {
+        "language": {"const": "ja"},
+        "paper": {"const": "A4"},
+        "columns": {"const": 1},
+        "body_font_pt": {"const": 10.5},
+        "punctuation": {"enum": ["，．", "、。"]}
+      }
+    }
+  }
+}
+

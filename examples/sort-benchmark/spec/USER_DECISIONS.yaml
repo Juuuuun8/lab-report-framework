@@ -1,0 +1,27 @@
+instructions_read_complete: true
+instructions_read_at: "2026-09-24T14:00:00+09:00"
+questions:
+  - id: Q-001
+    required_before_experiment: true
+    status: resolved
+    question: "表紙へ載せる項目と値を指定してください。"
+    decision: "様式見本用の架空所属・番号・氏名・日付を使用する。"
+    decided_by: user
+    decided_at: "2026-09-24T14:05:00+09:00"
+    rationale: "実在人物の個人情報を含めず、新表紙を確認するため。"
+  - id: Q-002
+    required_before_experiment: true
+    status: delegated
+    question: "実習書に選択肢がある場合、採用する条件を指定してください。"
+    decision: "入力サイズ4条件、各5回の架空計測値で様式を確認する。"
+    decided_by: codex
+    decided_at: "2026-09-24T14:06:00+09:00"
+    rationale: "実験結果の主張ではなく、図表・数式・コード・出典の表示見本を作るため。"
+  - id: Q-003
+    required_before_experiment: true
+    status: resolved
+    question: "追加のファイル名、ページ数、締切、提出形式の指定がありますか。"
+    decision: "A4 PDFと4つの補助成果物を作る。ページ数制限は設定しない。"
+    decided_by: user
+    decided_at: "2026-09-24T14:07:00+09:00"
+    rationale: "フレームワーク要件に基づく。"

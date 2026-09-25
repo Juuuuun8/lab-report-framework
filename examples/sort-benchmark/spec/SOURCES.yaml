@@ -1,0 +1,46 @@
+sources:
+  - source_id: S-001
+    language: ja
+    source_class: primary_official
+    organization: "Python Software Foundation"
+    title: "time --- 時刻データへのアクセスと変換"
+    url: "https://docs.python.org/ja/3/library/time.html#time.perf_counter_ns"
+    published_or_updated_at: null
+    accessed_at: "2026-09-24"
+    verification:
+      status: verified
+      locator: "time.perf_counter() および time.perf_counter_ns() の説明"
+      supports_claims:
+        - C-001
+      match_note: "perf_counter が短時間計測向けの高分解能カウンタであり、perf_counter_ns がナノ秒整数を返すことを確認した。"
+      selection_note: "日本語の公式ドキュメントであり、測定APIの一次情報として最優先した。"
+  - source_id: S-002
+    language: en
+    source_class: primary_official
+    organization: "National Institute of Standards and Technology"
+    title: "bubble sort"
+    url: "https://www.nist.gov/dads/HTML/bubblesort.html"
+    published_or_updated_at: "2023-04-07"
+    accessed_at: "2026-09-24"
+    verification:
+      status: verified
+      locator: "Note paragraph below the definition"
+      supports_claims:
+        - C-002
+      match_note: "任意データに対するバブルソートの計算量が O(n^2) と記載されていることを確認した。"
+      selection_note: "日本語の一次・公的資料を探索したが、同じ主張を直接示す適切な資料を確認できなかったため、米国政府機関の辞典を採用した。"
+  - source_id: S-003
+    language: en
+    source_class: primary_official
+    organization: "National Institute of Standards and Technology"
+    title: "quicksort"
+    url: "https://www.nist.gov/dads/HTML/quicksort.html"
+    published_or_updated_at: "2023-04-06"
+    accessed_at: "2026-09-24"
+    verification:
+      status: verified
+      locator: "Note paragraph below the related terms"
+      supports_claims:
+        - C-003
+      match_note: "クイックソートは最悪時 Theta(n^2)、典型的には O(n log n) と記載されていることを確認した。"
+      selection_note: "日本語の一次・公的資料を探索したが、同じ主張を直接示す適切な資料を確認できなかったため、米国政府機関の辞典を採用した。"

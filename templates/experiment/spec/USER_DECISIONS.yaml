@@ -1,0 +1,28 @@
+instructions_read_complete: false
+instructions_read_at: null
+questions:
+  - id: Q-001
+    required_before_experiment: true
+    status: open
+    question: "表紙へ載せる項目と値を指定してください。"
+    decision: null
+    decided_by: null
+    decided_at: null
+    rationale: null
+  - id: Q-002
+    required_before_experiment: true
+    status: open
+    question: "実習書に選択肢がある場合、採用する条件を指定してください。"
+    decision: null
+    decided_by: null
+    decided_at: null
+    rationale: null
+  - id: Q-003
+    required_before_experiment: true
+    status: open
+    question: "追加のファイル名、ページ数、締切、提出形式の指定がありますか。"
+    decision: null
+    decided_by: null
+    decided_at: null
+    rationale: null
+

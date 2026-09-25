@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SOURCES.yaml",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sources"],
+  "properties": {
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source_id", "language", "source_class", "organization", "title", "url", "accessed_at", "verification"],
+        "properties": {
+          "source_id": {"type": "string", "pattern": "^S-[0-9]{3}$"},
+          "language": {"enum": ["ja", "en"]},
+          "source_class": {"enum": ["primary_official", "primary_research", "secondary_reliable"]},
+          "organization": {"type": "string", "minLength": 1},
+          "title": {"type": "string", "minLength": 1},
+          "url": {"type": "string", "format": "uri"},
+          "published_or_updated_at": {"type": ["string", "null"]},
+          "accessed_at": {"type": "string", "minLength": 10},
+          "verification": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["status", "locator", "supports_claims", "match_note", "selection_note"],
+            "properties": {
+              "status": {"enum": ["candidate", "verified", "rejected"]},
+              "locator": {"type": "string"},
+              "supports_claims": {"type": "array", "items": {"type": "string", "pattern": "^C-[0-9]{3}$"}},
+              "match_note": {"type": "string"},
+              "selection_note": {"type": "string"}
+            }
+          }
+        }
+      }
+    }
+  }
+}
+

@@ -1,0 +1,25 @@
+status: approved
+objective: "架空の計測値を用い、入力サイズに対する2種類のソートの実行時間表示と新しいレポート様式を検証する。"
+independent_variables:
+  - "入力サイズ n（1000, 2000, 4000, 8000）"
+  - "アルゴリズム（バブルソート、クイックソート）"
+dependent_variables:
+  - "実行時間（ms）"
+controlled_variables:
+  - "同一の架空実行環境"
+  - "同じ入力系列を用いる想定"
+replications: 5
+warmups: 1
+random_seed: 20260924
+execution_order: "各入力サイズについてウォームアップ後、アルゴリズムごとに5回計測する想定。"
+exclusion_rules:
+  - "架空例では外れ値を除外しない。"
+stop_conditions:
+  - "各条件で5回の値が揃った時点で終了する。"
+analysis:
+  - "条件ごとの算術平均と標本標準偏差を算出する。"
+  - "入力サイズに対する平均実行時間を対数軸で図示する。"
+  - "8,000件における平均時間比を算出する。"
+risks:
+  - "値は架空であり、実機性能の根拠として使用できない。"
+safety_reviewed: true

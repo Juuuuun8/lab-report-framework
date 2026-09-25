@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "USER_DECISIONS.yaml",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["instructions_read_complete", "instructions_read_at", "questions"],
+  "properties": {
+    "instructions_read_complete": {"type": "boolean"},
+    "instructions_read_at": {"type": ["string", "null"]},
+    "questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "required_before_experiment", "status", "question", "decision", "decided_by", "decided_at"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^Q-[0-9]{3}$"},
+          "required_before_experiment": {"type": "boolean"},
+          "status": {"enum": ["open", "resolved", "delegated"]},
+          "question": {"type": "string", "minLength": 1},
+          "decision": {"type": ["string", "null"]},
+          "decided_by": {"enum": ["user", "codex", null]},
+          "decided_at": {"type": ["string", "null"]},
+          "rationale": {"type": ["string", "null"]}
+        }
+      }
+    }
+  }
+}
+

@@ -1,0 +1,21 @@
+cover:
+  course_name: "情報工学実験（様式見本）"
+  title: "ソートアルゴリズムの実行時間比較"
+  subtitle: "架空データによるレイアウト確認用レポート"
+  fields:
+    - label: "所属"
+      value: "情報理工学部 情報工学科"
+    - label: "学生番号"
+      value: "00000000"
+    - label: "氏名"
+      value: "山田 太郎（架空）"
+    - label: "実験日"
+      value: "2026年9月18日"
+    - label: "提出日"
+      value: "2026年9月24日"
+document:
+  language: ja
+  paper: A4
+  columns: 1
+  body_font_pt: 10.5
+  punctuation: "，．"

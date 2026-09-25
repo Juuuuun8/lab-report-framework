@@ -1,0 +1,21 @@
+status: draft
+objective: "TODO"
+independent_variables:
+  - "TODO"
+dependent_variables:
+  - "TODO"
+controlled_variables:
+  - "TODO"
+replications: 1
+warmups: 0
+random_seed: null
+execution_order: "TODO"
+exclusion_rules:
+  - "TODO: 除外しない場合も『除外しない』と明記"
+stop_conditions:
+  - "TODO"
+analysis:
+  - "TODO"
+risks: []
+safety_reviewed: false
+

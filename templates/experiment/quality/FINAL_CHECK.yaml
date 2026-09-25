@@ -1,0 +1,12 @@
+visual_review:
+  status: pending
+  reviewer: null
+  reviewed_at: null
+  rendered_pages: 0
+  notes: ""
+technical_review:
+  status: pending
+  reviewer: null
+  reviewed_at: null
+  notes: ""
+
