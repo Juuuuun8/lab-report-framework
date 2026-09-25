@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ACADEMIC_INTEGRITY.yaml",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["policy_status", "ai_use", "disclosure", "confirmations"],
+  "properties": {
+    "policy_status": {"enum": ["confirmed", "not_provided"]},
+    "policy_source_locator": {"type": ["string", "null"]},
+    "ai_use": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "allowed_uses", "prohibited_uses", "user_confirmed"],
+      "properties": {
+        "status": {"enum": ["allowed", "restricted", "prohibited", "unknown", "not_applicable"]},
+        "allowed_uses": {"type": "array", "items": {"type": "string"}},
+        "prohibited_uses": {"type": "array", "items": {"type": "string"}},
+        "user_confirmed": {"type": "boolean"}
+      }
+    },
+    "disclosure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "text"],
+      "properties": {
+        "required": {"type": ["boolean", "null"]},
+        "text": {"type": ["string", "null"]}
+      }
+    },
+    "confirmations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actual_work_status", "data_not_fabricated", "sources_not_fabricated", "student_can_explain"],
+      "properties": {
+        "actual_work_status": {"enum": ["confirmed", "not_applicable", "unconfirmed"]},
+        "data_not_fabricated": {"type": "boolean"},
+        "sources_not_fabricated": {"type": "boolean"},
+        "student_can_explain": {"type": "boolean"}
+      }
+    }
+  }
+}

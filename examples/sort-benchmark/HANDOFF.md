@@ -43,4 +43,7 @@ python scripts/validate_experiment.py examples/sort-benchmark --phase 8
 - `deliverables/HANDOFF.md`
 - `deliverables/SOURCE_AUDIT.md`
 - `deliverables/RESULT_TRACEABILITY.md`
+- `deliverables/RUBRIC_TRACEABILITY.md`
+- `deliverables/ORAL_DEFENSE.md`
+- `deliverables/QUALITY_REVIEW.yaml`
 - `deliverables/WORKLOG.md`

@@ -6,12 +6,14 @@
 
 最優先するのは各授業の実習書、課題文、教員の明示指示である。共通様式は、個別指定がない箇所にだけ適用する。過去レポートの外観は規範にせず、情報処理学会の執筆作法と、日本の大学が公開する理工系レポート指針から授業レポートに適する部分を採用している。
 
-この仕組みが守るものは次の4点である。
+この仕組みが守るものは次の6点である。
 
 1. 根拠のない推測をしない。
 2. 生データから本文の数値まで追跡できるようにする。
 3. 外部主張は実際に出典本文を確認してから引用する。
 4. PDFだけでなく、判断、出典、結果、作業履歴も引き渡す。
+5. 課題要件と採点基準を本文位置・証拠へ結び付ける。
+6. AI利用条件、本人実施範囲、説明可能性を提出前に確認する。
 
 ## 2. 作業ディレクトリ
 
@@ -21,6 +23,8 @@ CodexとAntigravityの作業ディレクトリには、必ずこのリポジト�
 lab-report-framework/          ← この階層を開く
 ├─ AGENTS.md
 ├─ ANTIGRAVITY.md
+├─ GEMINI.md
+├─ .agents/skills/japanese-report-polish/
 ├─ README.md
 ├─ docs/
 ├─ rules/
@@ -60,11 +64,15 @@ TeX環境には、LuaLaTeX、LuaTeX-ja、Harano Ajiフォント、latexmk、お�
 
 ### `AGENTS.md`
 
-Codexの強制規約である。実習書の全読、質問、データ保全、出典検証、TeX作成、目視確認、Antigravity後の再監査を定める。Codexは作業開始時に必ず読む。
+CodexとAntigravityがルートから自動発見する共通規約である。実習書の全読、質問、データ保全、出典検証、TeX作成、目視確認、Antigravity後の再監査を定める。
 
 ### `ANTIGRAVITY.md`
 
-Antigravityの作業範囲を日本語推敲だけに制限する。数値、単位、式、図表、コード、引用番号、断定の強さ、TeXレイアウトは変更してはならない。変更後はCodexが再監査する。
+Antigravityの詳細な日本語推敲契約である。`GEMINI.md` から明示的に読み込まれる。数値、単位、式、図表、コード、引用番号、断定の強さ、TeXレイアウトは変更してはならない。変更後はCodexが再監査する。
+
+### `GEMINI.md` と `.agents/skills/`
+
+Antigravityが公式の自動発見規則とSkill機構で日本語推敲契約へ到達するための入口である。SkillはPHASE 7だけで使い、技術内容の作成や修正には使わない。
 
 ### `README.md`
 
@@ -91,18 +99,21 @@ Python側の依存パッケージを固定する入口である。
 
 ### `schemas/`
 
-YAMLファイルの期待構造をJSON Schemaで記述する。入力項目の定義書として使う。現行の `validate_experiment.py` は重要条件を直接検査しており、JSON Schema全体の自動検証はまだ行わない。
+YAMLファイルの期待構造をJSON Schemaで記述する。`validate_experiment.py` は各YAMLを対応スキーマで検査したうえで、ID間参照や意味上のゲートも検査する。
 
 ### `scripts/`
 
 - `new_experiment.py`: 正規テンプレートを複製し、新しい実験を作る。
 - `build_report.py`: 表紙YAMLから `meta.tex` を生成し、LuaLaTeXでPDF化し、成果物を集約する。
 - `validate_experiment.py`: 指定Phaseまでの累積ゲートを検査する。
+- `polish_guard.py`: 日本語推敲の前後で数値、単位、参照、引用、数式、図表、コードを比較する。
 - `render_pdf.py`: PDF全ページをPNGへ変換し、目視確認を可能にする。
 
 ### `tex/`
 
 `labreport.cls` を置く。全実験で共通の用紙、文字、見出し、表紙、キャプション、フロート、コード、参考文献の表示を定義する。
+
+共通様式の不意な揺れは `config/style-contract.yaml` の正規化ハッシュで検出する。意図的にクラスを改訂する場合は、完成例を再ビルドして全ページを確認し、PHASE 8へ合格した後にだけcontractのrevisionとハッシュを更新する。
 
 ### `templates/experiment/`
 
@@ -136,7 +147,12 @@ experiments/sorting-2026/
 │  ├─ REPORT_META.yaml
 │  ├─ USER_DECISIONS.yaml
 │  ├─ EXPERIMENT_PLAN.yaml
-│  └─ SOURCES.yaml
+│  ├─ ASSIGNMENT_REQUIREMENTS.yaml
+│  ├─ ACADEMIC_INTEGRITY.yaml
+│  ├─ EXECUTION_MANIFEST.yaml
+│  ├─ SOURCES.yaml
+│  ├─ CLAIMS.yaml
+│  └─ STYLE_OVERRIDES.yaml
 ├─ data/
 │  ├─ raw/
 │  └─ processed/
@@ -146,11 +162,14 @@ experiments/sorting-2026/
 │  ├─ meta.tex
 │  └─ sections/
 ├─ quality/
-│  └─ FINAL_CHECK.yaml
+│  ├─ FINAL_CHECK.yaml
+│  └─ QUALITY_REVIEW.yaml
 ├─ QUESTIONS.md
 ├─ HANDOFF.md
 ├─ SOURCE_AUDIT.md
 ├─ RESULT_TRACEABILITY.md
+├─ RUBRIC_TRACEABILITY.md
+├─ ORAL_DEFENSE.md
 └─ WORKLOG.md
 ```
 
@@ -406,7 +425,7 @@ TeXでは原則として `[tbp]` を使う。参照したページに収まら�
 
 ### PHASE 1: 要求理解・事前質問
 
-実習書を全読し、質問へ回答を得る。`instructions_read_complete: true`、読了日時、必須質問の解決または明示委任、表紙情報が必要である。標準設定はA4・1段・10.5 ptである。
+実習書を全読し、質問へ回答を得る。`instructions_read_complete: true`、読了日時、必須質問の解決または明示委任、表紙情報が必要である。`ASSIGNMENT_REQUIREMENTS.yaml` に要求・採点基準・参照位置を記録し、`ACADEMIC_INTEGRITY.yaml` でAI利用規則を確定する。標準設定はA4・1段・10.5 ptである。
 
 ### PHASE 2: 実験計画
 
@@ -414,7 +433,7 @@ TeXでは原則として `[tbp]` を使う。参照したページに収まら�
 
 ### PHASE 3: 実験実行
 
-`data/raw/` に実データを保存し、`WORKLOG.md` にPHASE 3の記録を残す。
+`data/raw/` に実データを保存し、`EXECUTION_MANIFEST.yaml` に環境と各実行・生データの対応を記録し、`WORKLOG.md` にPHASE 3の記録を残す。
 
 ### PHASE 4: 分析
 
@@ -422,19 +441,19 @@ TeXでは原則として `[tbp]` を使う。参照したページに収まら�
 
 ### PHASE 5: 出典検証
 
-各出典が `verified` で、発行主体、題名、URL、アクセス日、言語、種別、確認位置、対応主張、一致説明、採用理由を持つことを確認する。
+各出典が `verified` で、発行主体、題名、URL、アクセス日、言語、種別、確認位置、対応主張、一致説明、採用理由を持つことを確認する。`CLAIMS.yaml` の外部主張、結果、推論をSource IDとResult IDへ接続する。
 
 ### PHASE 6: 執筆・TeX
 
-`labreport` クラスの使用、禁止構造の不使用、プレースホルダ解消、図表のキャプションとラベル、本文先行参照、図下・表上・リスト上キャプション、`HANDOFF.md` を検査する。`[H]` は記録された例外がない限り禁止である。
+`labreport` クラスの使用、禁止構造の不使用、プレースホルダ解消、図表のキャプションとラベル、本文先行参照、図下・表上・リスト上キャプション、`HANDOFF.md`、`RUBRIC_TRACEABILITY.md` を検査する。`[H]` と局所的な様式変更は、承認済み `STYLE_OVERRIDES.yaml` がない限り禁止である。
 
 ### PHASE 7: 日本語推敲・再監査
 
-Antigravityの推敲後にCodexが技術内容を再監査し、`WORKLOG.md` に `Codex再監査: 完了` を記録する。
+Antigravityの推敲前に `polish_guard.py snapshot`、推敲後に `polish_guard.py verify` を実行する。その後Codexが技術内容を再監査し、`WORKLOG.md` に `Codex再監査: 完了` を記録する。
 
 ### PHASE 8: 提出物固定
 
-PDFと4つの補助成果物を `deliverables/` に集約する。目視・技術検査を `FINAL_CHECK.yaml` で `passed` にし、PDFが表紙と本文を持つA4文書であることを検査する。
+PDFと7つの補助成果物を `deliverables/` に集約する。目視・技術検査を `FINAL_CHECK.yaml`、内容・採点基準監査を `QUALITY_REVIEW.yaml` で `passed` にし、PDFが表紙と本文を持つA4文書であることを検査する。
 
 各段階の実行例:
 
@@ -467,12 +486,13 @@ python scripts/build_report.py experiments/sorting-2026
 
 この処理は次を行う。
 
-1. `REPORT_META.yaml` を読み、TeX特殊文字をエスケープする。
-2. `report/meta.tex` を再生成する。
-3. 実験固有の `build/tex-cache/` を使用する。
-4. `latexmk -lualatex` で `build/main.pdf` を作る。
-5. PDFを `deliverables/report.pdf` へコピーする。
-6. 4つの補助成果物を `deliverables/` へコピーする。
+1. PHASE 0〜6を再検査し、不合格なら停止する。
+2. `REPORT_META.yaml` を読み、TeX特殊文字をエスケープする。
+3. `report/meta.tex` を再生成する。
+4. 実験固有の `build/tex-cache/` を使用する。
+5. `latexmk -lualatex` で `build/main.pdf` を作る。
+6. PDFを `deliverables/report.pdf` へコピーする。
+7. 7つの補助成果物を `deliverables/` へコピーする。
 
 `report/meta.tex` と `build/` は生成物である。表紙修正はYAML、本文修正は節ファイル、様式修正は `tex/labreport.cls` に行う。
 
@@ -507,6 +527,9 @@ python scripts/render_pdf.py `
 - `HANDOFF.md`: 作業内容、意識した点、結果、本文への反映、未解決事項、再生成方法、提出物一覧。
 - `SOURCE_AUDIT.md`: 本文主張と出典の対応、確認位置、内容一致、採否理由。
 - `RESULT_TRACEABILITY.md`: 数値、図表、結論とデータ・処理の対応。
+- `RUBRIC_TRACEABILITY.md`: 採点項目、本文位置、証拠、判定の対応。
+- `ORAL_DEFENSE.md`: 本人が説明できるかを確認する想定問答。
+- `QUALITY_REVIEW.yaml`: 採点項目と内容品質の最終監査。
 - `WORKLOG.md`: 日時、担当、Phase、入力、実行、判断根拠、変更、異常、相談、検証。
 
 必要に応じて分析コード、処理済みデータ、環境情報、検査ログも含める。ただし認証情報や不要な個人情報は入れない。
@@ -532,7 +555,7 @@ Antigravityが担当できる:
 - 語順と段落接続
 - 用語表記の統一
 
-Antigravityは内容を追加せず、疑問は修正ではなく `QUESTIONS.md` への提案とする。Codexは返却差分を確認し、数値、単位、式、引用、断定の強さが変わっていないことを再監査する。
+Antigravityは内容を追加せず、疑問は修正ではなく `QUESTIONS.md` への提案とする。作業は `GEMINI.md` と日本語推敲Skillから `ANTIGRAVITY.md` を読み、保護スナップショットを作ってから始める。Codexは返却差分を確認し、数値、単位、式、引用、断定の強さが変わっていないことを再監査する。
 
 ## 27. 実習書と共通規則が衝突した場合
 
@@ -579,7 +602,7 @@ Antigravityは内容を追加せず、疑問は修正ではなく `QUESTIONS.md`
 
 ### PHASE 8が通らない
 
-`deliverables/` の5ファイル、`FINAL_CHECK.yaml` の2つの `passed`、PDFのA4寸法を確認する。補助文書を更新した後は再ビルドして `deliverables/` へコピーし直す。
+`deliverables/` の8ファイル、`FINAL_CHECK.yaml` の2つの `passed`、`QUALITY_REVIEW.yaml` の全項目、PDFのA4寸法を確認する。補助文書を更新した後は再ビルドして `deliverables/` へコピーし直す。
 
 ### TeXの警告が出る
 
@@ -611,4 +634,4 @@ python scripts/build_report.py experiments/sorting-2026
 python scripts/validate_experiment.py experiments/sorting-2026 --phase 8
 ```
 
-最終的に、PDFを見ただけでなく、ユーザーが `HANDOFF.md` から作業全体を理解でき、`SOURCE_AUDIT.md` から引用根拠を確認でき、`RESULT_TRACEABILITY.md` から数値を生データへたどれ、`WORKLOG.md` から判断経緯を復元できる状態を完成とする。
+最終的に、PDFを見ただけでなく、ユーザーが `HANDOFF.md` から作業全体を理解でき、`SOURCE_AUDIT.md` から引用根拠を確認でき、`RESULT_TRACEABILITY.md` から数値を生データへたどれ、`RUBRIC_TRACEABILITY.md` と `QUALITY_REVIEW.yaml` から評価基準への対応を確認でき、`ORAL_DEFENSE.md` で本人の説明可能性を確かめ、`WORKLOG.md` から判断経緯を復元できる状態を完成とする。

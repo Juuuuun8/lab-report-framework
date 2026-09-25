@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "config/style-contract.yaml",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["revision", "class_path", "normalized_sha256", "invariants", "change_control"],
+  "properties": {
+    "revision": {"type": "integer", "minimum": 1},
+    "class_path": {"const": "tex/labreport.cls"},
+    "normalized_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["paper", "columns", "body_font_pt", "margins_mm", "figure_caption", "table_caption", "listing_caption", "cover_fields_alignment"],
+      "properties": {
+        "paper": {"const": "A4"},
+        "columns": {"const": 1},
+        "body_font_pt": {"const": 10.5},
+        "margins_mm": {"const": 25},
+        "figure_caption": {"const": "bottom"},
+        "table_caption": {"const": "top"},
+        "listing_caption": {"const": "top"},
+        "cover_fields_alignment": {"const": "centered_block"}
+      }
+    },
+    "change_control": {"type": "string", "minLength": 1}
+  }
+}

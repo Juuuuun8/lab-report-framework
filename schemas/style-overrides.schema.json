@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "STYLE_OVERRIDES.yaml",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["overrides"],
+  "properties": {
+    "overrides": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["override_id", "setting", "value", "reason", "source_locator", "approved_by", "approved_at"],
+        "properties": {
+          "override_id": {"type": "string", "pattern": "^OVR-[0-9]{3}$"},
+          "setting": {"type": "string", "minLength": 1},
+          "value": {},
+          "reason": {"type": "string", "minLength": 1},
+          "source_locator": {"type": "string", "minLength": 1},
+          "approved_by": {"enum": ["user", "instructor"]},
+          "approved_at": {"type": "string", "minLength": 10}
+        }
+      }
+    }
+  }
+}

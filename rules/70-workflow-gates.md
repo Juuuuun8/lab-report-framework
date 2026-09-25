@@ -22,6 +22,8 @@
 
 - 実習書を最初から最後まで読む。
 - 提出形式、必須章、課題、評価観点、禁止事項を抽出する。
+- `ASSIGNMENT_REQUIREMENTS.yaml` に実習書の参照位置付きで要求と採点基準を記録する。
+- `ACADEMIC_INTEGRITY.yaml` でAI利用可否、開示要否、本人実施範囲を確認する。
 - 表紙項目、実験条件、利用可能環境、提出物、相談が必要な判断を `QUESTIONS.md` にまとめ、可能な限り最初に一括して尋ねる。
 - 回答を `spec/USER_DECISIONS.yaml` に保存する。
 
@@ -31,6 +33,7 @@
 - 必須質問がすべて `resolved` または、ユーザーが明示的に Codex へ判断を委任している。
 - 表紙項目が `REPORT_META.yaml` に反映されている。
 - 根拠のない仮定がない。
+- AI利用規則が `unknown` のままではない。
 
 ## PHASE 2: 実験計画
 
@@ -53,6 +56,7 @@
 - 計画どおり実行し、日時・環境・版・条件・観察を記録する。
 - 生データを `data/raw/` に不変保存する。
 - 失敗、再試行、計画逸脱を記録する。
+- `EXECUTION_MANIFEST.yaml` に環境、実行単位、各生データファイル、失敗・除外・逸脱を記録する。
 
 ゲート:
 
@@ -79,6 +83,7 @@
 作業:
 
 - 外部知識が必要な主張を列挙する。
+- `CLAIMS.yaml` に外部主張、結果、推論、限界、方法を列挙し、Source IDとResult IDへ接続する。
 - 優先順位に従い資料を探し、本文を開いて該当箇所を確認する。
 - `spec/SOURCES.yaml` と `SOURCE_AUDIT.md` を更新する。
 
@@ -96,6 +101,8 @@
 - 実習書指定の構成で執筆する。
 - 図表、式、コード、引用を共通規則に従って配置する。
 - `HANDOFF.md` を含む補助成果物を更新する。
+- 採点項目を `RUBRIC_TRACEABILITY.md` で本文位置と証拠へ対応させる。
+- 共通様式の変更は本文へ直接書かず、根拠と承認を `STYLE_OVERRIDES.yaml` に記録する。
 
 ゲート:
 
@@ -109,6 +116,7 @@
 作業:
 
 - Antigravity が `ANTIGRAVITY.md` の範囲だけで推敲する。
+- 推敲前に `polish_guard.py snapshot`、推敲後に `polish_guard.py verify` を実行する。
 - Codex が差分を再監査する。
 
 ゲート:
@@ -128,7 +136,8 @@
 ゲート:
 
 - `report.pdf`、`HANDOFF.md`、`SOURCE_AUDIT.md`、`RESULT_TRACEABILITY.md`、`WORKLOG.md` が存在する。
+- `RUBRIC_TRACEABILITY.md`、`ORAL_DEFENSE.md`、`QUALITY_REVIEW.yaml` が存在する。
+- 必須採点項目と8つの内容品質検査が合格している。
 - PDFのページ数、用紙サイズ、埋め込みフォント、リンク、本文抽出を確認済みである。
 - 視覚欠陥がない。
 - `python scripts/validate_experiment.py <path> --phase 8` が成功する。
-

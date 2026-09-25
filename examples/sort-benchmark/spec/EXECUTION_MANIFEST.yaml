@@ -1,0 +1,15 @@
+environment:
+  recorded_at: "2026-09-24T14:30:00+09:00"
+  hardware: "様式確認用の架空環境（実在性能の主張には使用しない）"
+  operating_system: "架空環境"
+  software:
+    - "Python 3系を想定"
+    - "analysis/analyze.py"
+runs:
+  - run_id: RUN-001
+    performed_at: "2026-09-24T14:30:00+09:00"
+    condition: "4入力サイズ、2方式、各5回の架空計測値を完成例生成に使用"
+    raw_files:
+      - "data/raw/timings.csv"
+    status: synthetic_example
+    deviation: "実測ではなく、PDFと追跡可能性の確認専用である。"

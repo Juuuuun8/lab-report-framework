@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "QUALITY_REVIEW.yaml",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["reviewer", "reviewed_at", "rubric", "content_checks"],
+  "properties": {
+    "reviewer": {"type": "string", "minLength": 1},
+    "reviewed_at": {"type": "string", "minLength": 10},
+    "rubric": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rubric_id", "status", "report_locators", "evidence", "note"],
+        "properties": {
+          "rubric_id": {"type": "string", "pattern": "^RUB-[0-9]{3}$"},
+          "status": {"enum": ["passed", "not_applicable", "failed"]},
+          "report_locators": {"type": "array", "items": {"type": "string", "minLength": 1}},
+          "evidence": {"type": "array", "items": {"type": "string", "minLength": 1}},
+          "note": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "content_checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requirements_coverage", "technical_accuracy", "quantitative_consistency", "argument_quality", "limitations", "source_quality", "academic_integrity", "oral_defense"],
+      "properties": {
+        "requirements_coverage": {"$ref": "#/$defs/check"},
+        "technical_accuracy": {"$ref": "#/$defs/check"},
+        "quantitative_consistency": {"$ref": "#/$defs/check"},
+        "argument_quality": {"$ref": "#/$defs/check"},
+        "limitations": {"$ref": "#/$defs/check"},
+        "source_quality": {"$ref": "#/$defs/check"},
+        "academic_integrity": {"$ref": "#/$defs/check"},
+        "oral_defense": {"$ref": "#/$defs/check"}
+      }
+    }
+  },
+  "$defs": {
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "evidence"],
+      "properties": {
+        "status": {"enum": ["passed", "failed"]},
+        "evidence": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

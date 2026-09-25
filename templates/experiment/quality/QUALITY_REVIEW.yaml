@@ -1,0 +1,17 @@
+reviewer: "TODO"
+reviewed_at: "TODO"
+rubric:
+  - rubric_id: RUB-001
+    status: failed
+    report_locators: []
+    evidence: []
+    note: "TODO"
+content_checks:
+  requirements_coverage: {status: failed, evidence: "TODO"}
+  technical_accuracy: {status: failed, evidence: "TODO"}
+  quantitative_consistency: {status: failed, evidence: "TODO"}
+  argument_quality: {status: failed, evidence: "TODO"}
+  limitations: {status: failed, evidence: "TODO"}
+  source_quality: {status: failed, evidence: "TODO"}
+  academic_integrity: {status: failed, evidence: "TODO"}
+  oral_defense: {status: failed, evidence: "TODO"}

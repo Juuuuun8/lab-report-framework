@@ -1,0 +1,57 @@
+claims:
+  - claim_id: C-001
+    kind: external
+    text: "time.perf_counter_ns() は性能計測用カウンタをナノ秒整数で返す。"
+    report_locator: "2 実験方法・第2段落"
+    source_ids: [S-001]
+    result_ids: []
+    status: verified
+    verification_note: "Python公式日本語文書の該当項目と照合した。"
+  - claim_id: C-002
+    kind: external
+    text: "任意データに対するバブルソートの計算量は O(n^2) である。"
+    report_locator: "4 考察・第1段落"
+    source_ids: [S-002]
+    result_ids: []
+    status: verified
+    verification_note: "NIST DADSのNoteと照合した。"
+  - claim_id: C-003
+    kind: external
+    text: "クイックソートは最悪時 Theta(n^2)、典型的には O(n log n) である。"
+    report_locator: "4 考察・第1段落"
+    source_ids: [S-003]
+    result_ids: []
+    status: verified
+    verification_note: "NIST DADSのNoteと照合した。"
+  - claim_id: C-004
+    kind: result
+    text: "8,000件でバブル平均194.74 ms、クイック平均2.372 ms、比82.1である。"
+    report_locator: "3 結果・第1段落、5 結論"
+    source_ids: []
+    result_ids: [R-001, R-002, R-003]
+    status: verified
+    verification_note: "生データ、分析出力、手計算を照合した。"
+  - claim_id: C-005
+    kind: result
+    text: "1,000件から8,000件への平均時間増加率はバブル約62.4倍、クイック約10.1倍である。"
+    report_locator: "4 考察・第1段落"
+    source_ids: []
+    result_ids: [R-004]
+    status: verified
+    verification_note: "処理済みデータと再計算値を照合した。"
+  - claim_id: C-006
+    kind: inference
+    text: "架空値の増加傾向は、バブルソートの方が急速に増えるという理論上の関係と整合する。"
+    report_locator: "4 考察・第1段落"
+    source_ids: [S-002, S-003]
+    result_ids: [R-004]
+    status: verified
+    verification_note: "観測結果と理論を比較し、因果や証明を断定しない表現に限定した。"
+  - claim_id: C-007
+    kind: limitation
+    text: "架空値と4点の実行時間だけでは、実在環境の性能や漸近計算量を検証できない。"
+    report_locator: "4 考察・第2段落、5 結論"
+    source_ids: []
+    result_ids: [R-001, R-002, R-003, R-004]
+    status: verified
+    verification_note: "データの生成条件と観測範囲から適用限界を確認した。"

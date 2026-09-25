@@ -1,0 +1,27 @@
+assignment:
+  course: "TODO"
+  title: "TODO"
+  submission_format: "TODO"
+  deadline: null
+instruction_sources:
+  - instruction_id: I-001
+    path: "instructions/TODO.pdf"
+    sha256: null
+    read_complete: false
+    locator_scope: "TODO: 全ページ範囲"
+    note: null
+requirements:
+  - requirement_id: REQ-001
+    category: content
+    description: "TODO"
+    source_locator: "TODO: 実習書のページ・節"
+    mandatory: true
+    verification_method: "TODO"
+rubric_criteria:
+  - rubric_id: RUB-001
+    criterion: "TODO"
+    source_locator: "TODO: 採点基準または課題文"
+    required: true
+    weight: null
+    acceptance_criteria:
+      - "TODO"

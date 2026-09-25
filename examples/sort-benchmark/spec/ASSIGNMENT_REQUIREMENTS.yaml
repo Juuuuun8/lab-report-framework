@@ -1,0 +1,58 @@
+assignment:
+  course: "情報理工学実験 I（架空例）"
+  title: "ソートアルゴリズムの実行時間に関する性能評価"
+  submission_format: "PDFおよび監査用補助成果物"
+  deadline: null
+instruction_sources:
+  - instruction_id: I-001
+    path: "instructions/INPUT_INVENTORY.md"
+    sha256: null
+    read_complete: true
+    locator_scope: "全文"
+    note: "実習書を持たない様式確認用の架空例であることを確認した。"
+requirements:
+  - requirement_id: REQ-001
+    category: content
+    description: "図、表、数式、コード、参考文献を含む完成例を作る。"
+    source_locator: "I-001 全文"
+    mandatory: true
+    verification_method: "本文とPDFの目視確認"
+  - requirement_id: REQ-002
+    category: format
+    description: "A4・1段組・本文10.5ptとし、本文冒頭で表紙情報を再掲しない。"
+    source_locator: "フレームワーク共通様式"
+    mandatory: true
+    verification_method: "TeX設定、PDF寸法、本文1ページ目の確認"
+  - requirement_id: REQ-003
+    category: format
+    description: "図表とコードは本文で先に参照し、表とリストのキャプションは上、図は下に置く。"
+    source_locator: "フレームワーク共通様式"
+    mandatory: true
+    verification_method: "自動検査とPDF目視確認"
+rubric_criteria:
+  - rubric_id: RUB-001
+    criterion: "目的、方法、結果、考察、結論の論理が連続し、観測事実と解釈が分離されている。"
+    source_locator: "完成例の品質評価基準"
+    required: true
+    weight: null
+    acceptance_criteria:
+      - "目的に対応する結果と結論がある。"
+      - "結果節は観測値を述べ、理論との比較は考察節で行う。"
+  - rubric_id: RUB-002
+    criterion: "主要な数値、外部主張、推論を根拠へ追跡できる。"
+    source_locator: "完成例の品質評価基準"
+    required: true
+    weight: null
+    acceptance_criteria:
+      - "主要数値にResult IDがある。"
+      - "外部主張に検証済みSource IDがある。"
+      - "推論が出典または結果へ接続されている。"
+  - rubric_id: RUB-003
+    criterion: "指定様式に従い、図表・コード・数式・参考文献が読みやすい。"
+    source_locator: "完成例の品質評価基準"
+    required: true
+    weight: null
+    acceptance_criteria:
+      - "A4・1段組・本文10.5ptである。"
+      - "図表とリストが先行参照され、キャプション位置が正しい。"
+      - "全ページの目視検査に合格する。"

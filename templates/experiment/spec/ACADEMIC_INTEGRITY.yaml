@@ -1,0 +1,15 @@
+policy_status: not_provided
+policy_source_locator: null
+ai_use:
+  status: unknown
+  allowed_uses: []
+  prohibited_uses: []
+  user_confirmed: false
+disclosure:
+  required: null
+  text: null
+confirmations:
+  actual_work_status: unconfirmed
+  data_not_fabricated: false
+  sources_not_fabricated: false
+  student_can_explain: false

@@ -7,6 +7,7 @@ import argparse
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import yaml
@@ -58,6 +59,14 @@ def main() -> int:
     if not (experiment / "report" / "main.tex").is_file():
         parser.error(f"not an experiment directory: {experiment}")
 
+    # A PDF must never be produced from an experiment that has not passed the
+    # evidence, traceability, integrity, and style gates through PHASE 6.
+    subprocess.run(
+        [sys.executable, str(root / "scripts" / "validate_experiment.py"), str(experiment), "--phase", "6"],
+        cwd=root,
+        check=True,
+    )
+
     generate_meta(experiment)
     report_dir = experiment / "report"
     build_dir = experiment / "build"
@@ -85,8 +94,16 @@ def main() -> int:
 
     pdf = build_dir / "main.pdf"
     shutil.copy2(pdf, deliverables / "report.pdf")
-    for name in ["HANDOFF.md", "SOURCE_AUDIT.md", "RESULT_TRACEABILITY.md", "WORKLOG.md"]:
+    for name in [
+        "HANDOFF.md",
+        "SOURCE_AUDIT.md",
+        "RESULT_TRACEABILITY.md",
+        "RUBRIC_TRACEABILITY.md",
+        "ORAL_DEFENSE.md",
+        "WORKLOG.md",
+    ]:
         shutil.copy2(experiment / name, deliverables / name)
+    shutil.copy2(experiment / "quality" / "QUALITY_REVIEW.yaml", deliverables / "QUALITY_REVIEW.yaml")
     print(deliverables / "report.pdf")
     return 0
 

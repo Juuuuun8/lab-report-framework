@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EXECUTION_MANIFEST.yaml",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["environment", "runs"],
+  "properties": {
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recorded_at", "hardware", "operating_system", "software"],
+      "properties": {
+        "recorded_at": {"type": "string", "minLength": 10},
+        "hardware": {"type": "string", "minLength": 1},
+        "operating_system": {"type": "string", "minLength": 1},
+        "software": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "runs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["run_id", "performed_at", "condition", "raw_files", "status", "deviation"],
+        "properties": {
+          "run_id": {"type": "string", "pattern": "^RUN-[0-9]{3}$"},
+          "performed_at": {"type": "string", "minLength": 10},
+          "condition": {"type": "string", "minLength": 1},
+          "raw_files": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+          "status": {"enum": ["completed", "failed", "excluded", "synthetic_example"]},
+          "deviation": {"type": ["string", "null"]}
+        }
+      }
+    }
+  }
+}

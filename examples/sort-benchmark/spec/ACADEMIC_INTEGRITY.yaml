@@ -1,0 +1,17 @@
+policy_status: confirmed
+policy_source_locator: "架空の様式確認例であり、実在授業への提出物ではない。"
+ai_use:
+  status: not_applicable
+  allowed_uses:
+    - "フレームワークの様式確認"
+  prohibited_uses:
+    - "架空データを実測値として提出すること"
+  user_confirmed: true
+disclosure:
+  required: true
+  text: "数値はレイアウト確認用に作成した架空データである。"
+confirmations:
+  actual_work_status: not_applicable
+  data_not_fabricated: true
+  sources_not_fabricated: true
+  student_can_explain: true

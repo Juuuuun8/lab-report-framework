@@ -1,0 +1,14 @@
+environment:
+  recorded_at: "TODO"
+  hardware: "TODO"
+  operating_system: "TODO"
+  software:
+    - "TODO"
+runs:
+  - run_id: RUN-001
+    performed_at: "TODO"
+    condition: "TODO"
+    raw_files:
+      - "data/raw/TODO"
+    status: completed
+    deviation: null

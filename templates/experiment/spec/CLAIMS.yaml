@@ -1,0 +1,9 @@
+claims:
+  - claim_id: C-001
+    kind: external
+    text: "TODO"
+    report_locator: "TODO"
+    source_ids: []
+    result_ids: []
+    status: draft
+    verification_note: "TODO"

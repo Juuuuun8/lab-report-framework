@@ -33,7 +33,9 @@ lab-report-framework/          ← ここを開く
 - 図表は本文で先に番号参照し、その後の近傍へ置く。ページ上端または下端へのフロートを基本とし、段落途中へ無理に割り込ませない。
 - 図キャプションは下、表とコードリストのキャプションは上。図表内は英語が必要な場合を除き日本語とする。
 - 参考文献は、実際に本文を開いて主張との一致を確認したものだけを採用する。優先順位は「日本語一次情報・公的機関・公式文書 → 英語一次情報 → 信頼できる日本語二次資料」。
-- レポート本文と同時に、`HANDOFF.md`、`SOURCE_AUDIT.md`、`RESULT_TRACEABILITY.md`、`WORKLOG.md` を完成させる。
+- レポート本文と同時に、`HANDOFF.md`、`SOURCE_AUDIT.md`、`RESULT_TRACEABILITY.md`、`RUBRIC_TRACEABILITY.md`、`ORAL_DEFENSE.md`、`QUALITY_REVIEW.yaml`、`WORKLOG.md` を完成させる。
+- 課題要件、採点基準、主張、実行環境、AI利用条件を構造化し、内容品質と学術的誠実性をPDF生成前のゲートで検査する。
+- 共通TeXクラスは `config/style-contract.yaml` で版と正規化ハッシュを固定し、意図しない様式変更を検出する。
 - Codex が実験、分析、TeX、技術監査を担当する。Antigravity は日本語推敲だけを担当し、変更後は Codex が再監査する。
 
 詳細は [設計根拠](rules/00-design-basis.md) と [PHASE 0〜8](rules/70-workflow-gates.md) を参照してください。
@@ -42,7 +44,7 @@ lab-report-framework/          ← ここを開く
 
 ## 新しい実験を始める
 
-Python 3.10 以上と PyYAML が必要です。TeX をビルドする場合は LuaLaTeX と latexmk も使います。
+Python 3.10 以上が必要です。依存ライブラリは `python -m pip install -r requirements.txt` で導入します。TeX をビルドする場合は LuaLaTeX と latexmk も使います。
 
 ```powershell
 python scripts/new_experiment.py example-id --title "実験題目"
@@ -61,6 +63,8 @@ python scripts/validate_experiment.py experiments/example-id --phase 1
 python scripts/build_report.py experiments/example-id
 python scripts/validate_experiment.py experiments/example-id --phase 8
 ```
+
+`build_report.py` は最初にPHASE 0〜6を再検査するため、未検証の出典、未追跡の主張、未承認の様式変更を含むレポートはビルドできません。
 
 提出物は `experiments/<id>/deliverables/` に集約されます。
 
