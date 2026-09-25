@@ -15,6 +15,8 @@
 5. 課題要件と採点基準を本文位置・証拠へ結び付ける。
 6. AI利用条件、本人実施範囲、説明可能性を提出前に確認する。
 
+この仕組みは、AIへ丸投げして自動的にレポートを完成させるものではない。Codexは大量の読解、整合確認、計算、出典確認、TeX、監査を担当し、ユーザーは本人にしか確認できない実施事実、個人情報、結果への認識、説明可能性、提出可否を3回の承認で判断する。これにより、信頼性を落とさず、ユーザーへ機械ログを読ませず、AIにも同じ資料を何度も読ませない。
+
 ## 2. 作業ディレクトリ
 
 CodexとAntigravityの作業ディレクトリには、必ずこのリポジトリのルートを指定する。
@@ -96,6 +98,7 @@ Python側の依存パッケージを固定する入口である。
 - `50-evidence-and-writing.md`: 生データ、処理データ、結果、考察、追跡可能性。
 - `60-deliverables.md`: 最終PDF以外に必要な成果物。
 - `70-workflow-gates.md`: PHASE 0〜8の作業と合格条件。
+- `80-system-evolution.md`: 安全な自己改善、事前承認が必要な変更、改善候補の上限。
 
 ### `schemas/`
 
@@ -104,7 +107,9 @@ YAMLファイルの期待構造をJSON Schemaで記述する。`validate_experim
 ### `scripts/`
 
 - `new_experiment.py`: 正規テンプレートを複製し、新しい実験を作る。
-- `build_report.py`: 表紙YAMLから `meta.tex` を生成し、LuaLaTeXでPDF化し、成果物を集約する。
+- `workflow.py`: G1〜G3の確認票、承認ハッシュ、状態、提出版への昇格を管理する。
+- `reproduce.py`: 宣言済み分析コマンドを複製環境で再実行し、出力が一致するか検査する。
+- `build_report.py`: 表紙YAMLから `meta.tex` を生成し、作業用PDFまたは最終候補PDFを作る。提出版には直接触れない。
 - `validate_experiment.py`: 指定Phaseまでの累積ゲートを検査する。
 - `polish_guard.py`: 日本語推敲の前後で数値、単位、参照、引用、数式、図表、コードを比較する。
 - `render_pdf.py`: PDF全ページをPNGへ変換し、目視確認を可能にする。
@@ -150,6 +155,8 @@ experiments/sorting-2026/
 │  ├─ ASSIGNMENT_REQUIREMENTS.yaml
 │  ├─ ACADEMIC_INTEGRITY.yaml
 │  ├─ EXECUTION_MANIFEST.yaml
+│  ├─ CONTEXT_INDEX.yaml
+│  ├─ REPRODUCE.yaml
 │  ├─ SOURCES.yaml
 │  ├─ CLAIMS.yaml
 │  └─ STYLE_OVERRIDES.yaml
@@ -163,13 +170,20 @@ experiments/sorting-2026/
 │  └─ sections/
 ├─ quality/
 │  ├─ FINAL_CHECK.yaml
-│  └─ QUALITY_REVIEW.yaml
+│  ├─ QUALITY_REVIEW.yaml
+│  └─ RENDER_MANIFEST.yaml       # 最終候補の画像化時に生成
+├─ workflow/
+│  ├─ STATE.yaml
+│  ├─ G1_REVIEW.md
+│  ├─ G2_REVIEW.md
+│  └─ G3_REVIEW.md
 ├─ QUESTIONS.md
 ├─ HANDOFF.md
 ├─ SOURCE_AUDIT.md
 ├─ RESULT_TRACEABILITY.md
 ├─ RUBRIC_TRACEABILITY.md
 ├─ ORAL_DEFENSE.md
+├─ IMPROVEMENT_BACKLOG.yaml
 └─ WORKLOG.md
 ```
 
@@ -417,7 +431,7 @@ TeXでは原則として `[tbp]` を使う。参照したページに収まら�
 
 ## 21. PHASE 0〜8
 
-検査は累積である。たとえば `--phase 6` はPHASE 0から6までをまとめて確認する。
+検査は累積である。たとえば `--phase 6` はPHASE 0から6までをまとめて確認する。ただしユーザー承認は9回ではなく、G1、G2、G3の3回だけである。内部PhaseはCodexが品質を担保するための細分化である。
 
 ### PHASE 0: 受領・保全
 
@@ -429,19 +443,19 @@ TeXでは原則として `[tbp]` を使う。参照したページに収まら�
 
 ### PHASE 2: 実験計画
 
-計画を `approved` にし、目的、変数、反復、実行順、除外規則、停止条件、分析方法、安全確認を確定する。
+計画を `approved` にし、目的、変数、反復、実行順、除外規則、停止条件、分析方法、安全確認を確定する。PHASE 0〜2の自動検査後、`workflow/G1_REVIEW.md` をユーザーへ提示する。ユーザーが課題解釈、表紙、AI利用、実行可能性を確認し「承認 G1」と回答するまで実験を開始しない。
 
 ### PHASE 3: 実験実行
 
-`data/raw/` に実データを保存し、`EXECUTION_MANIFEST.yaml` に環境と各実行・生データの対応を記録し、`WORKLOG.md` にPHASE 3の記録を残す。
+`data/raw/` に実データを保存し、`EXECUTION_MANIFEST.yaml` に環境と各実行・生データの対応を記録し、`WORKLOG.md` にPHASE 3の記録を残す。`workflow.py seal-data` が各生データのSHA-256とサイズを固定する。封印後の変更は検出される。
 
 ### PHASE 4: 分析
 
-`data/processed/`、`analysis/`、完成した `RESULT_TRACEABILITY.md` が必要である。
+`data/processed/`、`analysis/`、完成した `RESULT_TRACEABILITY.md` が必要である。`REPRODUCE.yaml` にシェル文字列ではなく引数配列で分析手順を書き、`reproduce.py seal` で期待出力を固定する。`reproduce.py verify` は実験ディレクトリの複製上で分析を再実行し、出力ハッシュが完全一致するか確認する。
 
 ### PHASE 5: 出典検証
 
-各出典が `verified` で、発行主体、題名、URL、アクセス日、言語、種別、確認位置、対応主張、一致説明、採用理由を持つことを確認する。`CLAIMS.yaml` の外部主張、結果、推論をSource IDとResult IDへ接続する。
+各出典が `verified` で、発行主体、題名、URL、アクセス日、言語、種別、確認位置、対応主張、一致説明、採用理由を持つことを確認する。`CLAIMS.yaml` の外部主張、結果、推論をSource IDとResult IDへ接続する。PHASE 3〜5と再現検査の合格後、G2でユーザーが「そのデータを実際に得たか」「除外や失敗は正しいか」「主要結果と考察の方向を採用してよいか」を確認する。G2前に本文を書かない。
 
 ### PHASE 6: 執筆・TeX
 
@@ -453,7 +467,7 @@ Antigravityの推敲前に `polish_guard.py snapshot`、推敲後に `polish_gua
 
 ### PHASE 8: 提出物固定
 
-PDFと7つの補助成果物を `deliverables/` に集約する。目視・技術検査を `FINAL_CHECK.yaml`、内容・採点基準監査を `QUALITY_REVIEW.yaml` で `passed` にし、PDFが表紙と本文を持つA4文書であることを検査する。
+最終候補PDFに対して、目視・技術検査を `FINAL_CHECK.yaml`、内容・採点基準監査を `QUALITY_REVIEW.yaml` で `passed` にし、表紙と本文を持つA4文書であることを検査する。G3でユーザーが個人情報、見た目、自分で説明できる内容、提出可否を確認する。G3承認後に限り `workflow.py release` が候補PDFと7つの補助成果物を `deliverables/` に固定する。
 
 各段階の実行例:
 
@@ -481,28 +495,30 @@ python scripts/validate_experiment.py experiments/sorting-2026 --phase 2
 ## 23. PDFのビルド
 
 ```powershell
-python scripts/build_report.py experiments/sorting-2026
+python scripts/build_report.py experiments/sorting-2026 --mode draft
+python scripts/build_report.py experiments/sorting-2026 --mode candidate
 ```
 
 この処理は次を行う。
 
-1. PHASE 0〜6を再検査し、不合格なら停止する。
+1. draftはPHASE 0〜6、candidateはPHASE 0〜7を再検査し、不合格なら停止する。
 2. `REPORT_META.yaml` を読み、TeX特殊文字をエスケープする。
 3. `report/meta.tex` を再生成する。
 4. 実験固有の `build/tex-cache/` を使用する。
 5. `latexmk -lualatex` で `build/main.pdf` を作る。
-6. PDFを `deliverables/report.pdf` へコピーする。
-7. 7つの補助成果物を `deliverables/` へコピーする。
+6. 未解決参照、未解決引用、重複ラベル、Overfull boxがあれば失敗させる。
+7. draftは `build/draft.pdf`、candidateは `build/final-candidate.pdf` へコピーする。
 
-`report/meta.tex` と `build/` は生成物である。表紙修正はYAML、本文修正は節ファイル、様式修正は `tex/labreport.cls` に行う。
+`report/meta.tex` と `build/` は生成物である。表紙修正はYAML、本文修正は節ファイル、様式修正は `tex/labreport.cls` に行う。`deliverables/report.pdf` はG3承認後に `workflow.py release` だけが作る。
 
 ## 24. 全ページの目視確認
 
 ```powershell
 python scripts/render_pdf.py `
-  experiments/sorting-2026/deliverables/report.pdf `
+  experiments/sorting-2026/build/final-candidate.pdf `
   experiments/sorting-2026/quality/rendered `
-  --dpi 160
+  --dpi 180 `
+  --manifest experiments/sorting-2026/quality/RENDER_MANIFEST.yaml
 ```
 
 全ページで次を確認する。
@@ -543,7 +559,7 @@ Codexが担当する:
 - 出典検証
 - 数値、式、図表、コード
 - TeXとPDF
-- 技術監査と最終判断
+- 技術監査と提出可能性の判定
 
 Antigravityが担当できる:
 
@@ -556,6 +572,14 @@ Antigravityが担当できる:
 - 用語表記の統一
 
 Antigravityは内容を追加せず、疑問は修正ではなく `QUESTIONS.md` への提案とする。作業は `GEMINI.md` と日本語推敲Skillから `ANTIGRAVITY.md` を読み、保護スナップショットを作ってから始める。Codexは返却差分を確認し、数値、単位、式、引用、断定の強さが変わっていないことを再監査する。
+
+ユーザーが担当する:
+
+- 実際に行った作業、実験条件、失敗、除外、再実験の事実確認。
+- 氏名、学生番号、科目、日付、提出先などの個人・授業情報。
+- Codexが要約した結果と論証方針が本人の理解と一致するかの判断。
+- 最終候補PDFの見た目と、自分の言葉で説明できるかの確認。
+- G1、G2、G3の承認と、最終提出の意思決定。
 
 ## 27. 実習書と共通規則が衝突した場合
 
@@ -570,7 +594,7 @@ Antigravityは内容を追加せず、疑問は修正ではなく `QUESTIONS.md`
 
 ## 28. 自動検査だけでは判定できない事項
 
-自動検査は存在、形式、一部の参照順、A4寸法を確認できるが、次は人間またはCodexの意味上の確認が必要である。
+PythonスクリプトはAIではなく決定的な検査器である。存在、構造、ハッシュ、ID対応、一部の参照順、A4寸法、再生成一致は確認できるが、文章や実験の意味は理解しない。次はCodexまたはユーザーの意味上の確認が必要である。
 
 - 実習書を本当に全ページ読んだか。
 - 出典の本文が主張を正しく支えているか。
@@ -579,6 +603,7 @@ Antigravityは内容を追加せず、疑問は修正ではなく `QUESTIONS.md`
 - 有効数字と不確かさが適切か。
 - 考察の因果関係がデータ以上に強くないか。
 - PDFの視覚的な重心、読みやすさ、余白が適切か。
+- 実験を本人が本当に行ったか、本文を本人が説明できるか。
 
 このため、`validate_experiment.py` の成功だけで完成とはしない。PHASE 8の目視記録が必要である。
 
@@ -602,7 +627,7 @@ Antigravityは内容を追加せず、疑問は修正ではなく `QUESTIONS.md`
 
 ### PHASE 8が通らない
 
-`deliverables/` の8ファイル、`FINAL_CHECK.yaml` の2つの `passed`、`QUALITY_REVIEW.yaml` の全項目、PDFのA4寸法を確認する。補助文書を更新した後は再ビルドして `deliverables/` へコピーし直す。
+G3前なら `build/final-candidate.pdf`、G3後なら `deliverables/` の8ファイルを確認する。`FINAL_CHECK.yaml` の2つの `passed`、`QUALITY_REVIEW.yaml` の全項目、PDFのA4寸法も必要である。G3承認対象を修正した場合、古い承認は自動失効するため確認票からやり直す。
 
 ### TeXの警告が出る
 
@@ -614,24 +639,59 @@ Antigravityは内容を追加せず、疑問は修正ではなく `QUESTIONS.md`
 # 1. 新規実験
 python scripts/new_experiment.py sorting-2026 --title "実験題目"
 
-# 2. 実習書全読、質問、回答保存後
-python scripts/validate_experiment.py experiments/sorting-2026 --phase 1
+# 2. 実習書全読、質問、回答、計画、context index更新後にG1確認票を作る
+python scripts/workflow.py refresh-context experiments/sorting-2026
+python scripts/workflow.py prepare-review experiments/sorting-2026 --gate G1
 
-# 3. 計画承認後
-python scripts/validate_experiment.py experiments/sorting-2026 --phase 2
+# 3. ユーザーが「承認 G1」と答えた後だけ記録する
+python scripts/workflow.py approve experiments/sorting-2026 --gate G1 --decision "承認 G1"
 
-# 4. 実験、分析、出典検証、執筆を各ゲートで確認
-python scripts/validate_experiment.py experiments/sorting-2026 --phase 7
+# 4. 実験後に生データを封印し、分析結果を封印・再生成する
+python scripts/workflow.py seal-data experiments/sorting-2026
+python scripts/reproduce.py seal experiments/sorting-2026
+python scripts/reproduce.py verify experiments/sorting-2026
 
-# 5. PDF生成
-python scripts/build_report.py experiments/sorting-2026
+# 5. 出典検証後にG2確認票を作り、本人回答後だけ承認記録を作る
+python scripts/workflow.py prepare-review experiments/sorting-2026 --gate G2
+python scripts/workflow.py approve experiments/sorting-2026 --gate G2 --decision "承認 G2"
 
-# 6. 全ページ画像化と目視確認
-python scripts/render_pdf.py experiments/sorting-2026/deliverables/report.pdf experiments/sorting-2026/quality/rendered --dpi 160
+# 6. 執筆、必要ならAntigravity推敲、Codex再監査後に候補PDFを生成する
+python scripts/build_report.py experiments/sorting-2026 --mode candidate
+python scripts/render_pdf.py experiments/sorting-2026/build/final-candidate.pdf experiments/sorting-2026/quality/rendered --dpi 180 --manifest experiments/sorting-2026/quality/RENDER_MANIFEST.yaml
 
-# 7. FINAL_CHECKとWORKLOGを更新後に最終検査
-python scripts/build_report.py experiments/sorting-2026
-python scripts/validate_experiment.py experiments/sorting-2026 --phase 8
+# 7. FINAL_CHECK等を更新し、G3確認票を作る
+python scripts/workflow.py prepare-review experiments/sorting-2026 --gate G3
+
+# 8. ユーザーが「承認 G3」と答えた後だけ提出版へ固定する
+python scripts/workflow.py approve experiments/sorting-2026 --gate G3 --decision "承認 G3"
+python scripts/workflow.py release experiments/sorting-2026
 ```
 
-最終的に、PDFを見ただけでなく、ユーザーが `HANDOFF.md` から作業全体を理解でき、`SOURCE_AUDIT.md` から引用根拠を確認でき、`RESULT_TRACEABILITY.md` から数値を生データへたどれ、`RUBRIC_TRACEABILITY.md` と `QUALITY_REVIEW.yaml` から評価基準への対応を確認でき、`ORAL_DEFENSE.md` で本人の説明可能性を確かめ、`WORKLOG.md` から判断経緯を復元できる状態を完成とする。
+最終的に、PDFを見ただけでなく、ユーザーが `HANDOFF.md` から作業全体を理解でき、`SOURCE_AUDIT.md` から引用根拠を確認でき、`RESULT_TRACEABILITY.md` から数値を生データへたどれ、`RUBRIC_TRACEABILITY.md` と `QUALITY_REVIEW.yaml` から評価基準への対応を確認でき、`ORAL_DEFENSE.md` で本人の説明可能性を確かめ、`WORKLOG.md` から判断経緯を復元でき、G3承認が最新候補のハッシュへ結び付いた状態を完成とする。
+
+## 31. 3つの確認票と承認失効
+
+`prepare-review` は内部検査を通した後、チャットへ貼るための短い確認票を作る。G1は要求・表紙・AI利用・計画、G2は生データ・逸脱・主要結果・主張と出典、G3は最終候補・個人情報・見た目・説明可能性を扱う。詳しいファイル一覧は `STATE.yaml` に保存し、会話では原則として要約5項目、リスク3件以内だけを示す。
+
+承認はゲート対象ファイル群のSHA-256集合ダイジェストと一緒に保存される。承認後に対象ファイルが変わると `approval_current` が不一致を検出し、その先のPhase、ビルド、releaseを停止する。ユーザーの承認文はそのまま `decision_text` に保存し、Codexは代筆・要約・推測してはならない。完成例の移行にだけ `framework_migration` を使用でき、`examples/` 外では無効である。
+
+## 32. トークンを節約する仕組み
+
+- `CONTEXT_INDEX.yaml` に入力資料のハッシュ、短い検証済み要約、再読条件を保存する。ハッシュが同じ資料は、引用確認、疑義、最終重要確認がない限り全文を読み直さない。
+- Pythonにできる存在確認、構造検査、ハッシュ、集計、再生成、PDF寸法はPythonへ任せ、AIは意味判断へ集中する。
+- ユーザーには正常な技術ログを送らず、判断に必要な差分だけを確認票へまとめる。
+- ユーザーが確認できる本人事実と見た目はユーザーへ明示的に依頼する。Codexは本人確認を推測しない。
+- 途中相談は結果や採点が変わる重要事項だけに絞り、それ以外は次のゲートでまとめる。
+
+## 33. 自律的な改善
+
+各レポートで見つかった改善候補は `IMPROVEMENT_BACKLOG.yaml` に最大3件まで残す。誤字、説明、検査追加など出力意味や様式を変えないL1変更は、回帰テストと `SYSTEM_CHANGELOG.md` の記録を伴う場合だけ自動適用できる。スキーマ、標準様式、役割、承認回数、出力意味を変えるL2変更は、影響、移行方法、戻し方を提示し、ユーザー承認後に実装する。進行中の承認済みレポートへ黙って適用しない。
+
+## 34. 状態確認
+
+```powershell
+python scripts/workflow.py status experiments/sorting-2026
+python scripts/workflow.py verify experiments/sorting-2026
+```
+
+`status` は現在位置と各ゲートの状態、`verify` は承認済みゲートのハッシュが現在も一致するかを示す。これらはAIを呼ばず、ローカルファイルだけを読む。

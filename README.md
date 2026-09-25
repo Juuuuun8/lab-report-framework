@@ -37,6 +37,8 @@ lab-report-framework/          ← ここを開く
 - 課題要件、採点基準、主張、実行環境、AI利用条件を構造化し、内容品質と学術的誠実性をPDF生成前のゲートで検査する。
 - 共通TeXクラスは `config/style-contract.yaml` で版と正規化ハッシュを固定し、意図しない様式変更を検出する。
 - Codex が実験、分析、TeX、技術監査を担当する。Antigravity は日本語推敲だけを担当し、変更後は Codex が再監査する。
+- ユーザーはG1・G2・G3の3回で、本人にしか確認できない事実と採否を判断する。各承認は対象ファイルのハッシュへ結び付くため、後から内容が変われば自動失効する。
+- Pythonスクリプトはハッシュ、スキーマ、数値対応、再生成、PDF技術条件を機械検査する。課題の意味、結果の解釈、論証、資料内容の評価にはCodexが必要であり、本人性の確認はユーザーだけが行う。
 
 詳細は [設計根拠](rules/00-design-basis.md) と [PHASE 0〜8](rules/70-workflow-gates.md) を参照してください。
 
@@ -51,22 +53,35 @@ python scripts/new_experiment.py example-id --title "実験題目"
 python scripts/validate_experiment.py experiments/example-id --phase 0
 ```
 
-`experiments/example-id/instructions/` に実習書を置き、**実習書を全ページ読んでから** `QUESTIONS.md` を作成します。ユーザー回答を `spec/USER_DECISIONS.yaml` に保存し、PHASE 1 のゲートを通過するまで実験を開始しません。
+`experiments/example-id/instructions/` に実習書を置き、**実習書を全ページ読んでから** `QUESTIONS.md` を作成します。ユーザー回答を `spec/USER_DECISIONS.yaml` に保存し、G1を承認するまで実験を開始しません。
 
 ```powershell
-python scripts/validate_experiment.py experiments/example-id --phase 1
+python scripts/workflow.py refresh-context experiments/example-id
+python scripts/workflow.py prepare-review experiments/example-id --gate G1
+# ユーザーが確認票を読み、チャットで「承認 G1」と回答した後だけ実行
+python scripts/workflow.py approve experiments/example-id --gate G1 --decision "承認 G1"
 ```
 
-レポートのビルドと全検査は次のコマンドで行います。
+実験後は生データを封印し、分析結果を別環境で再生成できることを確認してからG2へ進みます。
 
 ```powershell
-python scripts/build_report.py experiments/example-id
-python scripts/validate_experiment.py experiments/example-id --phase 8
+python scripts/workflow.py seal-data experiments/example-id
+python scripts/reproduce.py seal experiments/example-id
+python scripts/workflow.py prepare-review experiments/example-id --gate G2
+# 「承認 G2」の本人回答後に approve を実行
 ```
 
-`build_report.py` は最初にPHASE 0〜6を再検査するため、未検証の出典、未追跡の主張、未承認の様式変更を含むレポートはビルドできません。
+G2後に執筆・Antigravity推敲・Codex再監査を行い、最終候補を作ります。候補と提出版は別物です。
 
-提出物は `experiments/<id>/deliverables/` に集約されます。
+```powershell
+python scripts/build_report.py experiments/example-id --mode candidate
+python scripts/render_pdf.py experiments/example-id/build/final-candidate.pdf experiments/example-id/quality/rendered --dpi 180 --manifest experiments/example-id/quality/RENDER_MANIFEST.yaml
+python scripts/workflow.py prepare-review experiments/example-id --gate G3
+# 「承認 G3」の本人回答後だけ提出版へ昇格
+python scripts/workflow.py release experiments/example-id
+```
+
+`build/draft.pdf` は作業用、`build/final-candidate.pdf` は本人確認用、`deliverables/report.pdf` だけがG3承認済みの提出版です。
 
 ## PHASE 0〜8
 
@@ -74,13 +89,13 @@ python scripts/validate_experiment.py experiments/example-id --phase 8
 |---:|---|---|
 | 0 | 受領・保全 | 実習書と入力物の一覧、ハッシュ、欠落確認 |
 | 1 | 要求理解・事前質問 | 実習書全読、`QUESTIONS.md`、回答済み `USER_DECISIONS.yaml` |
-| 2 | 実験計画 | 手順、変数、反復回数、停止条件、分析法を確定 |
+| 2 | 実験計画・G1 | 手順、変数、反復回数、停止条件、分析法を本人が承認 |
 | 3 | 実験実行 | 生データを不変保存し、環境と逸脱を記録 |
 | 4 | 分析 | 生データから再現可能な処理で表・図・統計量を生成 |
-| 5 | 出典検証 | 各外部主張と出典本文の対応を監査 |
+| 5 | 出典検証・G2 | 各外部主張と出典本文の対応、証拠と論証方針を本人が承認 |
 | 6 | 執筆・TeX | 規則に沿って本文と図表を作成 |
 | 7 | 日本語推敲・再監査 | Antigravity 推敲後に Codex が意味・数値・引用を再検証 |
-| 8 | 提出物固定 | PDF、追跡資料、ログ、検査結果を揃えて最終確認 |
+| 8 | G3・提出物固定 | 最終候補を本人が承認した後だけ提出版へ昇格 |
 
 ゲートの具体的な必須項目は `rules/70-workflow-gates.md` と `scripts/validate_experiment.py` が正です。
 

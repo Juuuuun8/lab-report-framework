@@ -1,0 +1,148 @@
+version: 1
+current_gate: complete
+status: released
+example_only: true
+gates:
+  G1:
+    status: approved
+    prepared_at: '2026-09-25T23:42:21+09:00'
+    decided_at: '2026-09-25T23:42:21+09:00'
+    decided_by: framework_migration
+    decision_text: '承認 G1: 架空完成例の回帰検証用移行'
+    artifact_digest: 2ac486d278421dd84b14ac0335562913299cf6f185dd4bbbe0aea0e682b77cc0
+    artifact_count: 8
+    review_file: workflow/G1_REVIEW.md
+    artifacts:
+    - path: QUESTIONS.md
+      sha256: 04cbe702f07fb25c13929365a8c2bc9dc38baec7901c9de7f45afa0c15a2905e
+      bytes: 914
+    - path: instructions/INPUT_INVENTORY.md
+      sha256: d119e49ef56f34a6b5b212e3b34c0e8b40d355fa5e53662cd8f90ef5b417239c
+      bytes: 459
+    - path: spec/ACADEMIC_INTEGRITY.yaml
+      sha256: a1a57c8b8065badf3f8f8beb555718db69ce84fec33a73249bd1ca37e0daf3af
+      bytes: 582
+    - path: spec/ASSIGNMENT_REQUIREMENTS.yaml
+      sha256: f42da3e96e887e47ce03d9ad193fa87d5cf805e203833e8833a64c9837d73b13
+      bytes: 2639
+    - path: spec/CONTEXT_INDEX.yaml
+      sha256: 92298671e6570d0c6b010172f1e755a9a7bad8d01000a74555c190341f7093f7
+      bytes: 435
+    - path: spec/EXPERIMENT_PLAN.yaml
+      sha256: 3ccf14b50fe864ec398a82b957d0e5cb8a86b05b2f290346fbfc62fe988a9458
+      bytes: 1136
+    - path: spec/REPORT_META.yaml
+      sha256: 70b858d242cb2c4a630219cf1a3282070c615a56816d3605b11b82ef9c86f78c
+      bytes: 602
+    - path: spec/USER_DECISIONS.yaml
+      sha256: 63516b52bf5dd2e9bb90081235285c2ec8d2c99b1461079d80c68442f556a233
+      bytes: 1359
+  G2:
+    status: approved
+    prepared_at: '2026-09-25T23:42:23+09:00'
+    decided_at: '2026-09-25T23:42:24+09:00'
+    decided_by: framework_migration
+    decision_text: '承認 G2: 架空完成例の回帰検証用移行'
+    artifact_digest: 0cc1b4e4d5991f30b1fb5259a010b03b3685e1e9c03364eefe95b987597e4a22
+    artifact_count: 10
+    review_file: workflow/G2_REVIEW.md
+    artifacts:
+    - path: RESULT_TRACEABILITY.md
+      sha256: 9281023f7dc6fffe2352a72622982eca9fe9318d57df6b708759e0851f72cf54
+      bytes: 985
+    - path: SOURCE_AUDIT.md
+      sha256: dfe745895f12dfee5443f6230c46e75aba870cc0fec6cff2481e40e8bd455f97
+      bytes: 1747
+    - path: analysis/__pycache__/analyze.cpython-312.pyc
+      sha256: e360143a9ae1e2e4880122fe853b5081904eddf7143619267be104bb49cc4648
+      bytes: 4155
+    - path: analysis/analyze.py
+      sha256: 97c6b10c779195c7409f6bd60baf2176811fc070bfb7e92c73378b84a16e39bf
+      bytes: 2532
+    - path: data/processed/summary.csv
+      sha256: 6adafddf494c838d38454c998ea064ae963f05de90fa0741afff07fcbcb2ba15
+      bytes: 266
+    - path: data/raw/timings.csv
+      sha256: 28e15cb8c7973882919813a84998e6173e4ecd378dd6eeedeeed51bc4260717b
+      bytes: 805
+    - path: spec/CLAIMS.yaml
+      sha256: c9e9735cb32c5d4c69214eb68e806cf288f9a846db58440fa01a79a9270eb7cf
+      bytes: 2463
+    - path: spec/EXECUTION_MANIFEST.yaml
+      sha256: 08065c157baef7e5e592ab680d10b6ce566ec07a3a18cba69486842eacfae913
+      bytes: 708
+    - path: spec/REPRODUCE.yaml
+      sha256: 40236b3bc516767bd3495e9f52d8b78a16d6854ea9403dfeef0cc6cebe1cdc76
+      bytes: 662
+    - path: spec/SOURCES.yaml
+      sha256: d3d9bc4f851cca6f774f663aad5756897d2f159c022677400f0bd67109f98c83
+      bytes: 2325
+  G3:
+    status: approved
+    prepared_at: '2026-09-25T23:44:46+09:00'
+    decided_at: '2026-09-25T23:44:46+09:00'
+    decided_by: framework_migration
+    decision_text: '承認 G3: 架空完成例の回帰検証用移行'
+    artifact_digest: bc54b14fdc1b8e95cf410ef0914d88a2dfcd50e6bb97b58c7c655c670678fd41
+    artifact_count: 19
+    review_file: workflow/G3_REVIEW.md
+    artifacts:
+    - path: HANDOFF.md
+      sha256: ca63e36302f46399ac125916fbf5bc826c755f3f4fbab5b36a7274eb532878a8
+      bytes: 2261
+    - path: ORAL_DEFENSE.md
+      sha256: a2e32b7c349936a127facde426d71d343bf944929f937a6f9bb28ac0a1977a63
+      bytes: 1108
+    - path: RUBRIC_TRACEABILITY.md
+      sha256: 26a4a41724e77b80694233f7813176396bcdca3d8963f526faa7da8f83e2d8dd
+      bytes: 707
+    - path: WORKLOG.md
+      sha256: 1cf866301cdb9f91eda98bed5097e18d2e5af3e3dfb7026d2cd46dd5ead29656
+      bytes: 7309
+    - path: build/final-candidate.pdf
+      sha256: aabd20b48d4cbfa25365178558c74bb25fb09281c8262f1eaf358db914c19028
+      bytes: 175802
+    - path: quality/FINAL_CHECK.yaml
+      sha256: cad8453c8b4770cc5d2636f3b25e0b929076d12e99921edd9331b45a36010542
+      bytes: 776
+    - path: quality/QUALITY_REVIEW.yaml
+      sha256: 52e9aa357ae2a34f406c521957f7336f6b970cedca1a17d5e977983e0642fc91
+      bytes: 1991
+    - path: quality/RENDER_MANIFEST.yaml
+      sha256: 194e7270a8210f9241c938ee88be98e0b36ed143c6f90c5dbe763c1df81366fa
+      bytes: 524
+    - path: report/generated/bubble.dat
+      sha256: a985412bf4b069a03317f9afce892c8e1925e72b3acf7971e59db8e30c5ba5c9
+      bytes: 60
+    - path: report/generated/quick.dat
+      sha256: 711273e06211388f8bdcfad578e133231752e8b0709232b00fd9c30c1679654e
+      bytes: 56
+    - path: report/generated/summary_table.tex
+      sha256: e6be4c0b5560493ad0571c66ac31d35d9026c22af37b5bbc70f384b0115a2eba
+      bytes: 297
+    - path: report/main.tex
+      sha256: 66d37b6eeca3b33da96c219b46659dc888a4679428bc3208db8fe4232b62e47a
+      bytes: 443
+    - path: report/meta.tex
+      sha256: a7f9812e1f9da58af6da86c1f025698621a8778d0011eec4ab212c2769a9910e
+      bytes: 490
+    - path: report/sections/01-purpose.tex
+      sha256: 02b31f40945d246679263021fb9623ada712a4f76a37a64c3845deb98e95bd2d
+      bytes: 406
+    - path: report/sections/02-method.tex
+      sha256: d00a3a4965df4e3c8e5ad7201ffa5728cce5b59ae2d6414a783b5eda39c1e05d
+      bytes: 1262
+    - path: report/sections/03-results.tex
+      sha256: fada98f6a325dc9d863a0a423f717010f9a85a26f3ea3b74a72fc5a6b7634b12
+      bytes: 1630
+    - path: report/sections/04-discussion.tex
+      sha256: 2974854730801c4b48b377d5969ed3fad5d3ea20ebdfa0c10f07c2a8cd9272b3
+      bytes: 1141
+    - path: report/sections/05-conclusion.tex
+      sha256: 07c316f234a2a72b73fa6dc77a6204c0a469e5d2fce163416866f1dc654f8006
+      bytes: 431
+    - path: report/sections/90-references.tex
+      sha256: 1dea2b4f22179a7dbba2577ba5e0d3c4ff62ffd3e438e07c2696f082759680a5
+      bytes: 696
+released_at: '2026-09-25T23:44:48+09:00'
+release_sha256: aabd20b48d4cbfa25365178558c74bb25fb09281c8262f1eaf358db914c19028

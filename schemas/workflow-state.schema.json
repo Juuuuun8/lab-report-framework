@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "workflow/STATE.yaml",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "current_gate", "status", "example_only", "gates"],
+  "properties": {
+    "version": {"const": 1},
+    "current_gate": {"enum": ["G1", "G2", "G3", "complete"]},
+    "status": {"enum": ["preparing", "awaiting_user", "executing", "approved", "released"]},
+    "example_only": {"type": "boolean"},
+    "released_at": {"type": "string"},
+    "release_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["G1", "G2", "G3"],
+      "properties": {
+        "G1": {"$ref": "#/$defs/gate"},
+        "G2": {"$ref": "#/$defs/gate"},
+        "G3": {"$ref": "#/$defs/gate"}
+      }
+    }
+  },
+  "$defs": {
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "prepared_at", "decided_at", "decided_by", "decision_text", "artifact_digest", "artifact_count", "review_file"],
+      "properties": {
+        "status": {"enum": ["pending", "awaiting_user", "approved"]},
+        "prepared_at": {"type": ["string", "null"]},
+        "decided_at": {"type": ["string", "null"]},
+        "decided_by": {"enum": ["user", "framework_migration", null]},
+        "decision_text": {"type": ["string", "null"]},
+        "artifact_digest": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+        "artifact_count": {"type": "integer", "minimum": 0},
+        "review_file": {"type": "string"},
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "sha256", "bytes"],
+            "properties": {
+              "path": {"type": "string"},
+              "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+              "bytes": {"type": "integer", "minimum": 0}
+            }
+          }
+        }
+      }
+    }
+  }
+}

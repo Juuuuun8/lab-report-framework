@@ -1,0 +1,20 @@
+commands:
+- command_id: A-001
+  argv:
+  - '{python}'
+  - analysis/analyze.py
+  cwd: .
+expected_outputs:
+- path: data/processed/summary.csv
+  sha256: 06904949f1ece18cbf7f7f7afb007961b44984221e1725ae534b235d8f753613
+  bytes: 266
+- path: report/generated/bubble.dat
+  sha256: a985412bf4b069a03317f9afce892c8e1925e72b3acf7971e59db8e30c5ba5c9
+  bytes: 60
+- path: report/generated/quick.dat
+  sha256: 711273e06211388f8bdcfad578e133231752e8b0709232b00fd9c30c1679654e
+  bytes: 56
+- path: report/generated/summary_table.tex
+  sha256: 79c9badacd74b76a081945617c579924be83cb35976f1db3080ad05290a66267
+  bytes: 297
+sealed_at: '2026-09-25T23:37:29+09:00'

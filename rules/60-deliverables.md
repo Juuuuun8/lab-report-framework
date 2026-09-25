@@ -1,6 +1,6 @@
 # 必須成果物
 
-最終レポートだけでは完了としない。`deliverables/` に次を揃える。
+最終レポートだけでは完了としない。G3承認前は `build/final-candidate.pdf` とルートの監査資料を候補として扱い、G3承認後に `workflow.py release` が `deliverables/` へ次を固定する。
 
 ## report.pdf
 
@@ -37,3 +37,5 @@
 ## 補助成果物
 
 必要に応じて、再現用コード、処理済みデータ、環境情報、検査ログを含める。個人情報や秘密情報は含めない。
+
+`build/draft.pdf`、`build/main.pdf`、`build/final-candidate.pdf` は提出版ではない。`deliverables/report.pdf` だけを提出用と呼んでよい。

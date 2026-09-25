@@ -1,0 +1,14 @@
+source_sha256: aabd20b48d4cbfa25365178558c74bb25fb09281c8262f1eaf358db914c19028
+rendered_at: '2026-09-25T23:44:09+09:00'
+dpi: 180
+page_count: 3
+pages:
+- path: rendered/page-01.png
+  sha256: 429f4eb255f4295283fa62955bcb2217480847f6c01ab9347231b10577d1294d
+  bytes: 63973
+- path: rendered/page-02.png
+  sha256: 73b6fe35fb0cc71b2ddfcbf1c31caa62d2d23f1de21a2e66d9034f66bfbbfe5b
+  bytes: 281771
+- path: rendered/page-03.png
+  sha256: 88af046c1a0e7d9a8f4c9f740b3bb14c4cfb811b0c536531a8d3023ee6d75755
+  bytes: 305760

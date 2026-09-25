@@ -1,0 +1,10 @@
+documents:
+- path: instructions/INPUT_INVENTORY.md
+  sha256: d119e49ef56f34a6b5b212e3b34c0e8b40d355fa5e53662cd8f90ef5b417239c
+  verified_summary: 実在の実習書を持たない、架空データによる様式・検査フロー確認例である。
+  related_gates:
+  - G1
+  - G3
+  reread_when:
+  - 入力一覧のハッシュが変わったとき
+  - 完成例を実在授業へ転用できるか疑義が生じたとき

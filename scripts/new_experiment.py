@@ -6,6 +6,8 @@ from __future__ import annotations
 import argparse
 import re
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 import yaml
@@ -33,10 +35,14 @@ def main() -> int:
     meta_path.write_text(
         yaml.safe_dump(meta, allow_unicode=True, sort_keys=False), encoding="utf-8"
     )
+    subprocess.run(
+        [sys.executable, str(root / "scripts" / "workflow.py"), "init", str(target)],
+        cwd=root,
+        check=True,
+    )
     print(target.relative_to(root))
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

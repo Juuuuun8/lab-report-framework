@@ -12,5 +12,5 @@
 __pycache__/
 .DS_Store
 build/
+**/quality/rendered/
 tmp/
-

@@ -4,11 +4,14 @@ environment:
   operating_system: "TODO"
   software:
     - "TODO"
+sealed_at: null
 runs:
   - run_id: RUN-001
     performed_at: "TODO"
     condition: "TODO"
     raw_files:
-      - "data/raw/TODO"
+      - path: "data/raw/TODO"
+        sha256: null
+        bytes: null
     status: completed
     deviation: null

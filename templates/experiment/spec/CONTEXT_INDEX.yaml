@@ -1,0 +1,8 @@
+documents:
+  - path: "instructions/INPUT_INVENTORY.md"
+    sha256: null
+    verified_summary: "TODO: この資料から確定した内容を短く記録"
+    related_gates: [G1]
+    reread_when:
+      - "ファイルハッシュが変わったとき"
+      - "要求解釈に疑義が生じたとき"

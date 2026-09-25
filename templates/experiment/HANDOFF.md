@@ -23,8 +23,10 @@
 ## 再生成方法
 
 ```powershell
-python scripts/build_report.py experiments/<id>
-python scripts/validate_experiment.py experiments/<id> --phase 8
+python scripts/reproduce.py verify experiments/<id>
+python scripts/build_report.py experiments/<id> --mode candidate
+# G3承認後のみ
+python scripts/workflow.py release experiments/<id>
 ```
 
 ## 提出ファイル

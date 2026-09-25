@@ -33,8 +33,9 @@
 
 ```powershell
 python examples/sort-benchmark/analysis/analyze.py
-python scripts/build_report.py examples/sort-benchmark
-python scripts/validate_experiment.py examples/sort-benchmark --phase 8
+python scripts/reproduce.py verify examples/sort-benchmark
+python scripts/build_report.py examples/sort-benchmark --mode candidate
+python scripts/workflow.py release examples/sort-benchmark
 ```
 
 ## 提出ファイル

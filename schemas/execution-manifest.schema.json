@@ -3,7 +3,7 @@
   "title": "EXECUTION_MANIFEST.yaml",
   "type": "object",
   "additionalProperties": false,
-  "required": ["environment", "runs"],
+  "required": ["environment", "runs", "sealed_at"],
   "properties": {
     "environment": {
       "type": "object",
@@ -16,6 +16,7 @@
         "software": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
       }
     },
+    "sealed_at": {"type": ["string", "null"]},
     "runs": {
       "type": "array",
       "minItems": 1,
@@ -27,7 +28,20 @@
           "run_id": {"type": "string", "pattern": "^RUN-[0-9]{3}$"},
           "performed_at": {"type": "string", "minLength": 10},
           "condition": {"type": "string", "minLength": 1},
-          "raw_files": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+          "raw_files": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["path", "sha256", "bytes"],
+              "properties": {
+                "path": {"type": "string", "minLength": 1},
+                "sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+                "bytes": {"type": ["integer", "null"], "minimum": 0}
+              }
+            }
+          },
           "status": {"enum": ["completed", "failed", "excluded", "synthetic_example"]},
           "deviation": {"type": ["string", "null"]}
         }

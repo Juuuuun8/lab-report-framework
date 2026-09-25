@@ -16,4 +16,6 @@ jobs:
       - run: python -m pip install -r requirements.txt
       - run: python -m py_compile scripts/*.py tests/*.py
       - run: python -m unittest discover -s tests -v
+      - run: python scripts/reproduce.py verify examples/sort-benchmark
+      - run: python scripts/workflow.py verify examples/sort-benchmark
       - run: python scripts/validate_experiment.py examples/sort-benchmark --phase 8

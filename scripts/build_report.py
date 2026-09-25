@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Generate cover metadata, build the LuaLaTeX report, and collect deliverables."""
+"""Generate a draft or final-candidate PDF; release is a separate user-approved step."""
 
 from __future__ import annotations
 
 import argparse
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -52,6 +53,7 @@ def generate_meta(experiment: Path) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("experiment", type=Path)
+    parser.add_argument("--mode", choices=("draft", "candidate"), default="draft")
     args = parser.parse_args()
 
     root = repo_root()
@@ -59,10 +61,9 @@ def main() -> int:
     if not (experiment / "report" / "main.tex").is_file():
         parser.error(f"not an experiment directory: {experiment}")
 
-    # A PDF must never be produced from an experiment that has not passed the
-    # evidence, traceability, integrity, and style gates through PHASE 6.
+    required_phase = 7 if args.mode == "candidate" else 6
     subprocess.run(
-        [sys.executable, str(root / "scripts" / "validate_experiment.py"), str(experiment), "--phase", "6"],
+        [sys.executable, str(root / "scripts" / "validate_experiment.py"), str(experiment), "--phase", str(required_phase)],
         cwd=root,
         check=True,
     )
@@ -70,9 +71,7 @@ def main() -> int:
     generate_meta(experiment)
     report_dir = experiment / "report"
     build_dir = experiment / "build"
-    deliverables = experiment / "deliverables"
     build_dir.mkdir(exist_ok=True)
-    deliverables.mkdir(exist_ok=True)
     tex_cache = build_dir / "tex-cache"
     tex_cache.mkdir(exist_ok=True)
 
@@ -93,18 +92,22 @@ def main() -> int:
     subprocess.run(command, cwd=report_dir, env=env, check=True)
 
     pdf = build_dir / "main.pdf"
-    shutil.copy2(pdf, deliverables / "report.pdf")
-    for name in [
-        "HANDOFF.md",
-        "SOURCE_AUDIT.md",
-        "RESULT_TRACEABILITY.md",
-        "RUBRIC_TRACEABILITY.md",
-        "ORAL_DEFENSE.md",
-        "WORKLOG.md",
-    ]:
-        shutil.copy2(experiment / name, deliverables / name)
-    shutil.copy2(experiment / "quality" / "QUALITY_REVIEW.yaml", deliverables / "QUALITY_REVIEW.yaml")
-    print(deliverables / "report.pdf")
+    log = build_dir / "main.log"
+    if log.is_file():
+        log_text = log.read_text(encoding="utf-8", errors="replace")
+        fatal_warnings = {
+            "undefined references": r"LaTeX Warning: There were undefined references",
+            "undefined citations": r"LaTeX Warning: There were undefined citations",
+            "multiply-defined labels": r"multiply defined",
+            "overfull boxes": r"Overfull \\hbox|Overfull \\vbox",
+        }
+        found = [name for name, pattern in fatal_warnings.items() if re.search(pattern, log_text, re.I)]
+        if found:
+            raise RuntimeError(f"TeX quality warnings must be resolved: {', '.join(found)}")
+
+    output = build_dir / ("draft.pdf" if args.mode == "draft" else "final-candidate.pdf")
+    shutil.copy2(pdf, output)
+    print(output)
     return 0
 
 

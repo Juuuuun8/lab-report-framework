@@ -1,0 +1,9 @@
+commands:
+  - command_id: A-001
+    argv: ["{python}", "analysis/TODO.py"]
+    cwd: "."
+expected_outputs:
+  - path: "data/processed/TODO.csv"
+    sha256: null
+    bytes: null
+sealed_at: null

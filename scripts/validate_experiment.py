@@ -10,7 +10,9 @@ import sys
 from pathlib import Path
 
 import yaml
-from jsonschema import Draft202012Validator
+from jsonschema import Draft202012Validator, FormatChecker
+
+from workflow_core import approval_current
 
 
 PLACEHOLDER = re.compile(r"\bTODO\b|指定待ち|未確認|未実施|\{\{.+?\}\}")
@@ -25,6 +27,11 @@ SCHEMAS = {
     "EXECUTION_MANIFEST.yaml": "execution-manifest.schema.json",
     "STYLE_OVERRIDES.yaml": "style-overrides.schema.json",
     "QUALITY_REVIEW.yaml": "quality-review.schema.json",
+    "CONTEXT_INDEX.yaml": "context-index.schema.json",
+    "REPRODUCE.yaml": "reproduce.schema.json",
+    "IMPROVEMENT_BACKLOG.yaml": "improvement-backlog.schema.json",
+    "STATE.yaml": "workflow-state.schema.json",
+    "RENDER_MANIFEST.yaml": "render-manifest.schema.json",
 }
 FORBIDDEN_STYLE_COMMANDS = (
     r"\geometry",
@@ -82,7 +89,8 @@ def load_structured(experiment: Path, relative: str, audit: Audit) -> dict:
         audit.file(schema_path, f"schema is missing: {schema_path}")
         if schema_path.is_file():
             schema = load_yaml(schema_path, audit)
-            for error in sorted(Draft202012Validator(schema).iter_errors(data), key=lambda item: list(item.path)):
+            validator = Draft202012Validator(schema, format_checker=FormatChecker())
+            for error in sorted(validator.iter_errors(data), key=lambda item: list(item.path)):
                 location = ".".join(str(part) for part in error.path) or "<root>"
                 audit.errors.append(f"schema {path.name} {location}: {error.message}")
     return data
@@ -251,7 +259,7 @@ def check_pdf_a4(pdf: Path, audit: Audit) -> int:
         return 0
 
 
-def validate(experiment: Path, phase: int) -> Audit:
+def validate(experiment: Path, phase: int, candidate: bool = False) -> Audit:
     audit = Audit()
 
     inventory = experiment / "instructions" / "INPUT_INVENTORY.md"
@@ -268,6 +276,8 @@ def validate(experiment: Path, phase: int) -> Audit:
         meta = load_structured(experiment, "spec/REPORT_META.yaml", audit)
         requirements = load_structured(experiment, "spec/ASSIGNMENT_REQUIREMENTS.yaml", audit)
         integrity = load_structured(experiment, "spec/ACADEMIC_INTEGRITY.yaml", audit)
+        context_index = load_structured(experiment, "spec/CONTEXT_INDEX.yaml", audit)
+        load_structured(experiment, "workflow/STATE.yaml", audit)
 
         audit.require(decisions.get("instructions_read_complete") is True, "PHASE 1: instructions_read_complete must be true")
         audit.require(bool(decisions.get("instructions_read_at")), "PHASE 1: instructions_read_at is required")
@@ -302,6 +312,19 @@ def validate(experiment: Path, phase: int) -> Audit:
         ai_use = integrity.get("ai_use", {})
         audit.require(ai_use.get("status") not in {None, "unknown"}, "PHASE 1: AI-use policy must be resolved before work starts")
         audit.require(ai_use.get("user_confirmed") is True, "PHASE 1: user must confirm the AI-use policy")
+        for document in context_index.get("documents", []):
+            relative = document.get("path", "")
+            target = (experiment / relative).resolve()
+            try:
+                target.relative_to(experiment.resolve())
+            except ValueError:
+                audit.errors.append(f"PHASE 1: context path escapes experiment: {relative}")
+                continue
+            audit.file(target, f"PHASE 1: indexed context is missing: {relative}")
+            if target.is_file() and document.get("sha256"):
+                actual = hashlib.sha256(target.read_bytes()).hexdigest()
+                audit.require(actual == document.get("sha256"), f"PHASE 1: indexed context changed and must be reread: {relative}")
+            audit.require(not PLACEHOLDER.search(str(document.get("verified_summary", ""))), f"PHASE 1: context summary is unresolved: {relative}")
 
     if phase >= 2:
         plan = load_structured(experiment, "spec/EXPERIMENT_PLAN.yaml", audit)
@@ -312,6 +335,8 @@ def validate(experiment: Path, phase: int) -> Audit:
         audit.require(not PLACEHOLDER.search(str(plan)), "PHASE 2: experiment plan contains placeholders")
 
     if phase >= 3:
+        approved, reason = approval_current(experiment, "G1")
+        audit.require(approved, f"PHASE 3: {reason}")
         audit.require(bool(meaningful_files(experiment / "data" / "raw")), "PHASE 3: raw data is required")
         manifest = load_structured(experiment, "spec/EXECUTION_MANIFEST.yaml", audit)
         audit.require(not PLACEHOLDER.search(str(manifest)), "PHASE 3: execution manifest contains placeholders")
@@ -319,12 +344,18 @@ def validate(experiment: Path, phase: int) -> Audit:
         unique_ids(runs, "run_id", audit, 3)
         for run in runs:
             for raw_file in run.get("raw_files", []):
-                raw_path = (experiment / raw_file).resolve()
+                raw_relative = raw_file.get("path", "") if isinstance(raw_file, dict) else str(raw_file)
+                raw_path = (experiment / raw_relative).resolve()
                 try:
                     raw_path.relative_to(experiment.resolve())
-                    audit.file(raw_path, f"PHASE 3: run {run.get('run_id')} raw file missing: {raw_file}")
+                    audit.file(raw_path, f"PHASE 3: run {run.get('run_id')} raw file missing: {raw_relative}")
+                    if raw_path.is_file() and isinstance(raw_file, dict):
+                        actual_hash = hashlib.sha256(raw_path.read_bytes()).hexdigest()
+                        audit.require(actual_hash == raw_file.get("sha256"), f"PHASE 3: raw data hash mismatch: {raw_relative}")
+                        audit.require(raw_path.stat().st_size == raw_file.get("bytes"), f"PHASE 3: raw data size mismatch: {raw_relative}")
                 except ValueError:
-                    audit.errors.append(f"PHASE 3: raw file path escapes experiment: {raw_file}")
+                    audit.errors.append(f"PHASE 3: raw file path escapes experiment: {raw_relative}")
+        audit.require(bool(manifest.get("sealed_at")), "PHASE 3: raw data manifest has not been sealed")
         worklog = experiment / "WORKLOG.md"
         audit.file(worklog)
         if worklog.is_file():
@@ -340,6 +371,19 @@ def validate(experiment: Path, phase: int) -> Audit:
         trace_text = text_without_placeholders(experiment / "RESULT_TRACEABILITY.md", audit, 4)
         result_ids = set(re.findall(r"\bR-[0-9]{3}\b", trace_text))
         audit.require(bool(result_ids), "PHASE 4: result traceability must contain completed R- IDs")
+        reproduce = load_structured(experiment, "spec/REPRODUCE.yaml", audit)
+        audit.require(bool(reproduce.get("sealed_at")), "PHASE 4: analysis outputs have not been sealed")
+        for output in reproduce.get("expected_outputs", []):
+            relative = output.get("path", "")
+            target = (experiment / relative).resolve()
+            try:
+                target.relative_to(experiment.resolve())
+                audit.file(target, f"PHASE 4: expected analysis output missing: {relative}")
+                if target.is_file():
+                    audit.require(hashlib.sha256(target.read_bytes()).hexdigest() == output.get("sha256"), f"PHASE 4: analysis output hash mismatch: {relative}")
+                    audit.require(target.stat().st_size == output.get("bytes"), f"PHASE 4: analysis output size mismatch: {relative}")
+            except ValueError:
+                audit.errors.append(f"PHASE 4: analysis output path escapes experiment: {relative}")
 
     claims: list[dict] = []
     source_ids: set[str] = set()
@@ -381,6 +425,8 @@ def validate(experiment: Path, phase: int) -> Audit:
                 audit.require(claim.get("claim_id") in source_audit, f"PHASE 5: SOURCE_AUDIT lacks {claim.get('claim_id')}")
 
     if phase >= 6:
+        approved, reason = approval_current(experiment, "G2")
+        audit.require(approved, f"PHASE 6: {reason}")
         check_style_contract(audit)
         overrides = load_structured(experiment, "spec/STYLE_OVERRIDES.yaml", audit)
         allowed = {str(item.get("setting")) for item in overrides.get("overrides", [])}
@@ -407,19 +453,24 @@ def validate(experiment: Path, phase: int) -> Audit:
             audit.require(expected == protected_snapshot(experiment / "report"), "PHASE 7: protected technical content changed during polishing")
 
     if phase >= 8:
-        deliverables = experiment / "deliverables"
         required_files = [
-            "report.pdf",
             "HANDOFF.md",
             "SOURCE_AUDIT.md",
             "RESULT_TRACEABILITY.md",
             "RUBRIC_TRACEABILITY.md",
             "ORAL_DEFENSE.md",
-            "QUALITY_REVIEW.yaml",
             "WORKLOG.md",
         ]
-        for name in required_files:
-            audit.file(deliverables / name, f"PHASE 8: missing deliverable {name}")
+        if candidate:
+            for name in required_files:
+                audit.file(experiment / name, f"PHASE 8: missing candidate artifact {name}")
+            audit.file(experiment / "quality" / "QUALITY_REVIEW.yaml", "PHASE 8: missing candidate artifact QUALITY_REVIEW.yaml")
+        else:
+            base = experiment / "deliverables"
+            for name in [*required_files, "QUALITY_REVIEW.yaml", "report.pdf"]:
+                audit.file(base / name, f"PHASE 8: missing deliverable {name}")
+            approved, reason = approval_current(experiment, "G3")
+            audit.require(approved, f"PHASE 8: {reason}")
 
         final_check = load_yaml(experiment / "quality" / "FINAL_CHECK.yaml", audit)
         audit.require(final_check.get("visual_review", {}).get("status") == "passed", "PHASE 8: visual review must be passed")
@@ -451,10 +502,32 @@ def validate(experiment: Path, phase: int) -> Audit:
         audit.require(confirmations.get("sources_not_fabricated") is True, "PHASE 8: source integrity is not confirmed")
         audit.require(confirmations.get("student_can_explain") is True, "PHASE 8: student understanding is not confirmed")
 
-        pdf = deliverables / "report.pdf"
+        load_structured(experiment, "IMPROVEMENT_BACKLOG.yaml", audit)
+        pdf = experiment / "build" / "final-candidate.pdf" if candidate else experiment / "deliverables" / "report.pdf"
         page_count = check_pdf_a4(pdf, audit) if pdf.is_file() else 0
         rendered_pages = final_check.get("visual_review", {}).get("rendered_pages")
         audit.require(rendered_pages == page_count, f"PHASE 8: rendered page count {rendered_pages} does not match PDF page count {page_count}")
+        render_manifest = load_structured(experiment, "quality/RENDER_MANIFEST.yaml", audit)
+        if pdf.is_file():
+            audit.require(
+                render_manifest.get("source_sha256") == hashlib.sha256(pdf.read_bytes()).hexdigest(),
+                "PHASE 8: visual review manifest does not match the PDF being validated",
+            )
+        audit.require(render_manifest.get("page_count") == page_count, "PHASE 8: render manifest page count does not match PDF")
+        audit.require(len(render_manifest.get("pages", [])) == page_count, "PHASE 8: render manifest page list is incomplete")
+        if candidate:
+            manifest_root = experiment / "quality"
+            for page in render_manifest.get("pages", []):
+                relative = page.get("path", "")
+                rendered = (manifest_root / relative).resolve()
+                try:
+                    rendered.relative_to(manifest_root.resolve())
+                    audit.file(rendered, f"PHASE 8: rendered review page is missing: {relative}")
+                    if rendered.is_file():
+                        audit.require(hashlib.sha256(rendered.read_bytes()).hexdigest() == page.get("sha256"), f"PHASE 8: rendered page hash mismatch: {relative}")
+                        audit.require(rendered.stat().st_size == page.get("bytes"), f"PHASE 8: rendered page size mismatch: {relative}")
+                except ValueError:
+                    audit.errors.append(f"PHASE 8: rendered page path escapes quality directory: {relative}")
 
     return audit
 
@@ -463,12 +536,13 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("experiment", type=Path)
     parser.add_argument("--phase", type=int, choices=range(0, 9), required=True)
+    parser.add_argument("--candidate", action="store_true", help="validate build/final-candidate.pdf before user release approval")
     args = parser.parse_args()
     experiment = args.experiment.resolve()
     if not experiment.is_dir():
         parser.error(f"not a directory: {experiment}")
 
-    audit = validate(experiment, args.phase)
+    audit = validate(experiment, args.phase, candidate=args.candidate)
     if audit.errors:
         print(f"FAIL: PHASE 0-{args.phase}")
         for error in audit.errors:
