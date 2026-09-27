@@ -16,6 +16,16 @@
 
 - TODO
 
+## 本文の本人執筆確認
+
+- 原文保存先: `prose/original/`
+- 組版済み本文: `prose/typeset/`
+- 意味を変える修正の承認状況: TODO
+
+## 教授視点評価
+
+- `PROFESSOR_EVALUATION.md` を参照
+
 ## ユーザー確認事項・未解決事項
 
 - TODO
@@ -33,8 +43,9 @@ python scripts/workflow.py release experiments/<id>
 
 - `deliverables/report.pdf`
 - `deliverables/HANDOFF.md`
+- `deliverables/PROFESSOR_EVALUATION.md`
 - `deliverables/SOURCE_AUDIT.md`
 - `deliverables/RESULT_TRACEABILITY.md`
 - `deliverables/WORKLOG.md`
 
-授業指定または本人希望がある場合だけ、採点対応表や口頭試問資料を追加する。
+`PROFESSOR_EVALUATION.md` は本人確認用であり、教員から指定されない限りレポートと一緒に提出しない。採点対応表や口頭試問資料は必要な場合だけ追加する。

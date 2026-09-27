@@ -2,6 +2,22 @@
 
 \input{meta.tex}
 
+% 本文はユーザー原文から作成したファイルだけを読み込む。
+% 未提出時は骨格PDFに（文章N）を表示する。
+\IfFileExists{../build/report-mode.tex}{\input{../build/report-mode.tex}}{\def\reportskeleton{0}}
+\newcommand{\slotplaceholder}[1]{%
+  \par\medskip\noindent
+  \fbox{\parbox{0.94\linewidth}{\centering\textbf{（#1）}}}%
+  \par\medskip
+}
+\newcommand{\proseslot}[2]{%
+  \ifnum\reportskeleton=1
+    \slotplaceholder{#2}%
+  \else
+    \IfFileExists{../prose/typeset/#1.tex}{\input{../prose/typeset/#1.tex}}{\slotplaceholder{#2}}%
+  \fi
+}
+
 \begin{document}
 \makelabcover
 
@@ -14,4 +30,3 @@
 \input{sections/90-references.tex}
 
 \end{document}
-

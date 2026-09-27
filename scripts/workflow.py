@@ -74,6 +74,8 @@ def run_validation(experiment: Path, gate: str) -> None:
     ]
     if gate == "G3":
         command.append("--candidate")
+    if gate == "G2":
+        command.append("--skeleton")
     subprocess.run(command, cwd=repo_root(), check=True)
     if gate == "G2":
         subprocess.run(
@@ -96,12 +98,13 @@ def packet_g1(experiment: Path) -> list[str]:
     meta = load_yaml(experiment / "spec" / "REPORT_META.yaml")
     integrity = load_yaml(experiment / "spec" / "ACADEMIC_INTEGRITY.yaml")
     assignment = req.get("assignment", {})
+    rubric_source = req.get("rubric_source", {})
     lines = [
         f"- 科目・課題: {assignment.get('course')} / {assignment.get('title')}",
         f"- 提出形式・確認項目: {assignment.get('submission_format')} / 要求{len(req.get('requirements', []))}件・採点基準{len(req.get('rubric_criteria', []))}件",
-        f"- AI利用状態: {integrity.get('ai_use', {}).get('status')}",
-        f"- 実験目的: {plan.get('objective')}",
-        f"- 反復回数: {plan.get('replications')}、表紙項目数: {len(meta.get('cover', {}).get('fields', []))}",
+        f"- 採点基準の由来: {rubric_source.get('status')}（本人確認: {rubric_source.get('confirmed_by_user')}）",
+        f"- AI利用状態: {integrity.get('ai_use', {}).get('status')} / 本文: 本人執筆のみ",
+        f"- 実験目的・反復: {plan.get('objective')} / {plan.get('replications')}回",
     ]
     return lines
 
@@ -113,12 +116,13 @@ def packet_g2(experiment: Path) -> list[str]:
     deviations = [str(run.get("deviation")) for run in manifest.get("runs", []) if run.get("deviation")]
     result_text = (experiment / "RESULT_TRACEABILITY.md").read_text(encoding="utf-8")
     result_ids = sorted(set(__import__("re").findall(r"\bR-[0-9]{3}\b", result_text)))
+    writing = load_yaml(experiment / "spec" / "WRITING_PLAN.yaml")
     return [
         f"- 実行数: {len(manifest.get('runs', []))}",
         f"- 主要結果: {', '.join(result_ids)}",
-        f"- 主張数: {len(claims)}、検証済み出典数: {len(sources)}",
+        f"- 主張数: {len(claims)}、検証済み出典数: {len(sources)}、文章枠: {len(writing.get('slots', []))}",
         f"- 計画逸脱: {'; '.join(limited(deviations, 3)) if deviations else 'なし'}",
-        "- 詳細: RESULT_TRACEABILITY.md、SOURCE_AUDIT.md、spec/CLAIMS.yaml",
+        "- 骨格PDF: build/skeleton.pdf（見出し・図表・式・コード・文章枠を確認）",
     ]
 
 
@@ -126,14 +130,15 @@ def packet_g3(experiment: Path) -> list[str]:
     quality = load_yaml(experiment / "quality" / "QUALITY_REVIEW.yaml")
     final = load_yaml(experiment / "quality" / "FINAL_CHECK.yaml")
     rubric = quality.get("rubric", [])
+    professor = load_yaml(experiment / "quality" / "PROFESSOR_REVIEW.yaml")
     failed = [item.get("rubric_id") for item in rubric if item.get("status") == "failed"]
     pdf = experiment / "build" / "final-candidate.pdf"
     return [
         f"- 最終候補PDF: {pdf.relative_to(experiment).as_posix()} ({pdf.stat().st_size} bytes)",
         f"- 採点基準: {len(rubric)}件、失敗: {', '.join(failed) if failed else 'なし'}",
-        f"- 視覚確認: {final.get('visual_review', {}).get('status')}",
-        f"- 技術確認: {final.get('technical_review', {}).get('status')}",
-        "- 詳細: HANDOFF.md、quality/QUALITY_REVIEW.yaml",
+        f"- 教授視点評価: {professor.get('overall', {}).get('verdict')} / {professor.get('overall', {}).get('score_percent')}点",
+        f"- PDF検査: 視覚 {final.get('visual_review', {}).get('status')} / 技術 {final.get('technical_review', {}).get('status')}",
+        "- 詳細: HANDOFF.md、PROFESSOR_EVALUATION.md",
     ]
 
 
@@ -141,18 +146,21 @@ PACKET_BUILDERS = {"G1": packet_g1, "G2": packet_g2, "G3": packet_g3}
 USER_CHECKS = {
     "G1": [
         "課題の解釈、提出条件、表紙情報に誤りがないか。",
+        "採点基準の抽出内容と、各基準の合格条件に誤りがないか。",
         "AI利用範囲が授業規則に反していないか。",
         "実験条件、反復回数、除外基準を実際に実行できるか。",
     ],
     "G2": [
         "生データが実際に行った実験・作業のものか。",
         "失敗、除外、再実験、環境情報に誤りがないか。",
-        "主要結果と考察の方向を本人の認識として採用してよいか。",
+        "見出し、図表、数式、コード、文章枠の順序が書きたい論理に合うか。",
+        "各（文章N）の執筆メモと、主要結果・考察の方向を採用してよいか。",
     ],
     "G3": [
         "氏名、学生番号、科目名、日付が正しいか。",
         "PDFの見た目、図表、文字、改ページに問題がないか。",
-        "実際にしていないことや、自分で説明できない記述がないか。",
+        "本文が自分の原文に基づき、意味を変える未承認修正がないか。",
+        "教授視点評価の弱点を理解し、それでも提出してよいか。",
         "この最終候補を提出用PDFへ確定してよいか。",
     ],
 }
@@ -199,6 +207,7 @@ def release(experiment: Path) -> None:
     shutil.copy2(candidate, deliverables / "report.pdf")
     for name in [
         "HANDOFF.md",
+        "PROFESSOR_EVALUATION.md",
         "SOURCE_AUDIT.md",
         "RESULT_TRACEABILITY.md",
         "WORKLOG.md",

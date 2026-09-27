@@ -15,7 +15,7 @@
 - ユーザー回答: 未取得
 - 承認対象ハッシュ: `workflow/STATE.yaml` を参照
 
-## G2 証拠・解釈確認
+## G2 証拠・骨格確認
 
 - 確認票: `workflow/G2_REVIEW.md`
 - ユーザー回答: 未取得
@@ -23,11 +23,16 @@
 
 ## PHASE 7 再監査
 
-- Antigravity利用: なし
 - Codex再監査: 未実施
-- 技術的意味の変更: 未確認
+- 本人原文保全: 未実施
+- 意味変更: 未確認
 
-## G3 提出
+## PHASE 8 教授視点評価
+
+- 評価基準: `spec/ASSIGNMENT_REQUIREMENTS.yaml`
+- 評価結果: 未実施
+
+## G3 完成稿・提出確認
 
 - 確認票: `workflow/G3_REVIEW.md`
 - ユーザー回答: 未取得

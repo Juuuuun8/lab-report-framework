@@ -1,8 +1,8 @@
 \section{実験方法}
 
-入力サイズ $n$ を1,000，2,000，4,000，8,000件の4条件とし，各条件でバブルソートとクイックソートを5回ずつ実行した想定の値を用いた．各系列は同じ入力を処理したものとし，ウォームアップ相当の1回は集計に含めなかった．外れ値の除外は行わなかった．
+\proseslot{P-002}{文章2}
 
-短時間の経過時間を整数ナノ秒で取得できる \texttt{time.perf\_counter\_ns()} を計測APIとして想定した．Python公式文書では，この関数は性能計測用カウンタをナノ秒整数で返すと説明されている\sourcecite{1}．計測部の抜粋をリスト~\ref{lst:timer}に示す．
+\proseslot{P-003}{文章3}
 
 \begin{lstlisting}[language=Python,caption={実行時間を計測する処理の抜粋},label={lst:timer}]
 start_ns = time.perf_counter_ns()
@@ -10,7 +10,7 @@ sort_function(values.copy())
 elapsed_ms = (time.perf_counter_ns() - start_ns) / 1_000_000
 \end{lstlisting}
 
-条件ごとの代表値には，式~\eqref{eq:mean}で定義する算術平均 $\bar{t}$ を用いた．ここで，$t_i$ は第 $i$ 試行の実行時間，$m$ は試行回数であり，本例では $m=5$ である．
+\proseslot{P-004}{文章4}
 
 \begin{equation}
   \bar{t}=\frac{1}{m}\sum_{i=1}^{m} t_i ．

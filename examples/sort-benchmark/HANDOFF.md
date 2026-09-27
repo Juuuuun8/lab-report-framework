@@ -29,6 +29,17 @@
 - 数値は表示確認専用であり、実在環境の性能評価には使用できない。
 - 実際の授業では、実習書の表紙指定、章構成、提出形式が本フレームワークより優先される。
 
+## 本文の本人執筆確認
+
+- 完成例では、実利用時の本人原文に相当する固定フィクスチャを `prose/original/` に保存した。
+- 組版済み本文は `prose/typeset/` に分離し、原文9件のSHA-256を `spec/WRITING_PLAN.yaml` に記録した。
+- 意味を変える修正はなく、数式、単位、参照、引用のTeX組版だけを行った。
+
+## 教授視点評価
+
+- `PROFESSOR_EVALUATION.md` に、RUB-001〜RUB-003ごとの根拠、厳しい指摘、改善案を記録した。
+- 模擬評価は93点・提出可能相当だが、架空データと内部基準によるため成績を保証しない。
+
 ## 再生成方法
 
 ```powershell
@@ -42,6 +53,7 @@ python scripts/workflow.py release examples/sort-benchmark
 
 - `deliverables/report.pdf`
 - `deliverables/HANDOFF.md`
+- `deliverables/PROFESSOR_EVALUATION.md`
 - `deliverables/SOURCE_AUDIT.md`
 - `deliverables/RESULT_TRACEABILITY.md`
 - `deliverables/WORKLOG.md`

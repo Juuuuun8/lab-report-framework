@@ -3,7 +3,7 @@
   "title": "ASSIGNMENT_REQUIREMENTS.yaml",
   "type": "object",
   "additionalProperties": false,
-  "required": ["assignment", "instruction_sources", "requirements", "rubric_criteria"],
+  "required": ["assignment", "instruction_sources", "requirements", "rubric_source", "rubric_criteria"],
   "properties": {
     "assignment": {
       "type": "object",
@@ -48,6 +48,16 @@
           "mandatory": {"type": "boolean"},
           "verification_method": {"type": "string", "minLength": 1}
         }
+      }
+    },
+    "rubric_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "confirmed_by_user", "note"],
+      "properties": {
+        "status": {"enum": ["provided", "not_provided_internal"]},
+        "confirmed_by_user": {"type": "boolean"},
+        "note": {"type": "string", "minLength": 1}
       }
     },
     "rubric_criteria": {

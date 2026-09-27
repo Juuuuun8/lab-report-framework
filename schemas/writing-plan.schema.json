@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WRITING_PLAN.yaml",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "status", "skeleton_pdf", "slots"],
+  "properties": {
+    "version": {"const": 1},
+    "status": {"enum": ["planning", "skeleton_ready", "prose_complete"]},
+    "skeleton_pdf": {"const": "build/skeleton.pdf"},
+    "slots": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["slot_id", "display_label", "section", "purpose", "required_points", "planned_references", "evidence_ids", "rubric_ids", "authorship", "status", "original_file", "original_sha256", "typeset_file", "semantic_change", "proofread_notes"],
+        "properties": {
+          "slot_id": {"type": "string", "pattern": "^P-[0-9]{3}$"},
+          "display_label": {"type": "string", "pattern": "^文章[0-9]+$"},
+          "section": {"type": "string", "minLength": 1},
+          "purpose": {"type": "string", "minLength": 1},
+          "required_points": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+          "planned_references": {"type": "array", "items": {"type": "string", "pattern": "^[A-Za-z0-9:_-]+$"}},
+          "evidence_ids": {"type": "array", "items": {"type": "string", "minLength": 1}},
+          "rubric_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "^RUB-[0-9]{3}$"}},
+          "authorship": {"enum": ["user", "example_fixture"]},
+          "status": {"enum": ["awaiting_user", "user_submitted", "typeset"]},
+          "original_file": {"type": "string", "pattern": "^prose/original/P-[0-9]{3}\\.md$"},
+          "original_sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+          "typeset_file": {"type": "string", "pattern": "^prose/typeset/P-[0-9]{3}\\.tex$"},
+          "semantic_change": {"enum": ["none", "user_approved", "pending_user_approval"]},
+          "proofread_notes": {"type": ["string", "null"]}
+        }
+      }
+    }
+  }
+}

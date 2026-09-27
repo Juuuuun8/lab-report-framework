@@ -32,6 +32,8 @@ SCHEMAS = {
     "IMPROVEMENT_BACKLOG.yaml": "improvement-backlog.schema.json",
     "STATE.yaml": "workflow-state.schema.json",
     "RENDER_MANIFEST.yaml": "render-manifest.schema.json",
+    "WRITING_PLAN.yaml": "writing-plan.schema.json",
+    "PROFESSOR_REVIEW.yaml": "professor-review.schema.json",
 }
 FORBIDDEN_STYLE_COMMANDS = (
     r"\geometry",
@@ -132,11 +134,41 @@ def check_instruction_source(experiment: Path, source: dict, audit: Audit) -> No
         audit.require(actual.lower() == str(expected_hash).lower(), f"PHASE 1: instruction hash mismatch: {raw_path}")
 
 
-def check_tex(experiment: Path, audit: Audit, allowed_style_settings: set[str]) -> None:
+def check_tex(
+    experiment: Path,
+    audit: Audit,
+    allowed_style_settings: set[str],
+    allow_planned_references: bool = False,
+) -> None:
     report = experiment / "report"
     tex_files = sorted(report.rglob("*.tex"))
     audit.require(bool(tex_files), "PHASE 6: report has no TeX files")
-    combined = "\n".join(path.read_text(encoding="utf-8") for path in tex_files)
+    writing_plan_path = experiment / "spec" / "WRITING_PLAN.yaml"
+    writing_plan = yaml.safe_load(writing_plan_path.read_text(encoding="utf-8")) if writing_plan_path.is_file() else {}
+    planned_by_slot = {
+        slot.get("slot_id"): slot.get("planned_references", [])
+        for slot in (writing_plan or {}).get("slots", [])
+    }
+    def expand_slots(text: str) -> str:
+        def replacement(match: re.Match[str]) -> str:
+            slot_id = match.group(1)
+            typeset = experiment / "prose" / "typeset" / f"{slot_id}.tex"
+            if typeset.is_file():
+                return typeset.read_text(encoding="utf-8")
+            if allow_planned_references:
+                return " ".join(rf"\ref{{{label}}}" for label in planned_by_slot.get(slot_id, []))
+            return match.group(0)
+
+        return re.sub(r"\\proseslot\{(P-[0-9]{3})\}\{文章[0-9]+\}", replacement, text)
+
+    main = report / "main.tex"
+    ordered_sections = sorted((report / "sections").glob("*.tex"))
+    supporting = [path for path in tex_files if path != main and path not in ordered_sections]
+    combined = "\n".join(
+        [main.read_text(encoding="utf-8") if main.is_file() else ""]
+        + [expand_slots(path.read_text(encoding="utf-8")) for path in ordered_sections]
+        + [path.read_text(encoding="utf-8") for path in supporting]
+    )
 
     audit.require(r"\documentclass{labreport}" in combined, "PHASE 6: main document must use labreport class")
     for forbidden in [r"\twocolumn", r"\begin{abstract}", r"\maketitle", r"\author{"]:
@@ -188,6 +220,45 @@ def check_tex(experiment: Path, audit: Audit, allowed_style_settings: set[str]) 
     if class_file.is_file():
         class_text = class_file.read_text(encoding="utf-8")
         audit.require("captionpos=t" in class_text, "PHASE 6: listing captions must be positioned above code")
+
+
+def check_writing_plan(experiment: Path, audit: Audit, require_prose: bool, example_only: bool) -> dict:
+    plan = load_structured(experiment, "spec/WRITING_PLAN.yaml", audit)
+    slots = plan.get("slots", [])
+    slot_ids = unique_ids(slots, "slot_id", audit, 5 if not require_prose else 6)
+    labels = [item.get("display_label") for item in slots]
+    audit.require(len(labels) == len(set(labels)), "PHASE 5: duplicate writing-slot labels")
+    audit.require(plan.get("status") in ({"skeleton_ready", "prose_complete"} if not require_prose else {"prose_complete"}), "PHASE 5: writing plan is not ready")
+
+    report_files = sorted((experiment / "report").rglob("*.tex"))
+    combined = "\n".join(path.read_text(encoding="utf-8") for path in report_files)
+    found = re.findall(r"\\proseslot\{(P-[0-9]{3})\}\{(文章[0-9]+)\}", combined)
+    audit.require(len(found) == len(slots), "PHASE 5: report prose-slot count does not match WRITING_PLAN")
+    audit.require({item[0] for item in found} == slot_ids, "PHASE 5: report prose-slot IDs do not match WRITING_PLAN")
+    for slot in slots:
+        slot_id = slot.get("slot_id")
+        audit.require((slot_id, slot.get("display_label")) in found, f"PHASE 5: report lacks prose slot {slot_id}")
+        if not require_prose:
+            continue
+        audit.require(slot.get("status") == "typeset", f"PHASE 6: prose slot {slot_id} is not complete")
+        expected_author = "example_fixture" if example_only else "user"
+        audit.require(slot.get("authorship") == expected_author, f"PHASE 6: prose slot {slot_id} authorship must be {expected_author}")
+        audit.require(slot.get("semantic_change") in {"none", "user_approved"}, f"PHASE 6: prose slot {slot_id} has an unapproved meaning change")
+        original = experiment / str(slot.get("original_file", ""))
+        typeset = experiment / str(slot.get("typeset_file", ""))
+        audit.file(original, f"PHASE 6: original user prose is missing for {slot_id}")
+        audit.file(typeset, f"PHASE 6: typeset prose is missing for {slot_id}")
+        if original.is_file():
+            actual, _ = content_fingerprint(original)
+            audit.require(actual == slot.get("original_sha256"), f"PHASE 6: original user prose hash mismatch for {slot_id}")
+            audit.require(not PLACEHOLDER.search(original.read_text(encoding="utf-8")), f"PHASE 6: original prose contains a placeholder for {slot_id}")
+        if typeset.is_file():
+            typeset_text = typeset.read_text(encoding="utf-8")
+            audit.require(not PLACEHOLDER.search(typeset_text), f"PHASE 6: typeset prose contains a placeholder for {slot_id}")
+            audit.require(not re.search(r"[（(]文章[0-9]+[）)]", typeset_text), f"PHASE 6: unresolved prose marker in {slot_id}")
+        if slot.get("semantic_change") == "user_approved":
+            audit.require("承認" in str(slot.get("proofread_notes") or ""), f"PHASE 6: prose slot {slot_id} lacks a recorded user approval note")
+    return plan
 
 
 def check_style_contract(audit: Audit) -> None:
@@ -259,7 +330,7 @@ def check_pdf_a4(pdf: Path, audit: Audit) -> int:
         return 0
 
 
-def validate(experiment: Path, phase: int, candidate: bool = False) -> Audit:
+def validate(experiment: Path, phase: int, candidate: bool = False, skeleton: bool = False) -> Audit:
     audit = Audit()
 
     inventory = experiment / "instructions" / "INPUT_INVENTORY.md"
@@ -270,6 +341,7 @@ def validate(experiment: Path, phase: int, candidate: bool = False) -> Audit:
     integrity: dict = {}
     decisions: dict = {}
     meta: dict = {}
+    workflow_state: dict = {}
     if phase >= 1:
         text_without_placeholders(experiment / "QUESTIONS.md", audit, 1)
         decisions = load_structured(experiment, "spec/USER_DECISIONS.yaml", audit)
@@ -277,7 +349,7 @@ def validate(experiment: Path, phase: int, candidate: bool = False) -> Audit:
         requirements = load_structured(experiment, "spec/ASSIGNMENT_REQUIREMENTS.yaml", audit)
         integrity = load_structured(experiment, "spec/ACADEMIC_INTEGRITY.yaml", audit)
         context_index = load_structured(experiment, "spec/CONTEXT_INDEX.yaml", audit)
-        load_structured(experiment, "workflow/STATE.yaml", audit)
+        workflow_state = load_structured(experiment, "workflow/STATE.yaml", audit)
 
         audit.require(decisions.get("instructions_read_complete") is True, "PHASE 1: instructions_read_complete must be true")
         audit.require(bool(decisions.get("instructions_read_at")), "PHASE 1: instructions_read_at is required")
@@ -303,8 +375,11 @@ def validate(experiment: Path, phase: int, candidate: bool = False) -> Audit:
             check_instruction_source(experiment, source, audit)
         reqs = requirements.get("requirements", [])
         rubrics = requirements.get("rubric_criteria", [])
+        rubric_source = requirements.get("rubric_source", {})
         audit.require(bool(reqs), "PHASE 1: extracted requirements must not be empty")
         audit.require(bool(rubrics), "PHASE 1: rubric criteria must not be empty")
+        audit.require(rubric_source.get("confirmed_by_user") is True, "PHASE 1: rubric criteria must be confirmed by the user")
+        audit.require(rubric_source.get("status") in {"provided", "not_provided_internal"}, "PHASE 1: rubric source status is unresolved")
         unique_ids(reqs, "requirement_id", audit, 1)
         unique_ids(rubrics, "rubric_id", audit, 1)
         audit.require(not PLACEHOLDER.search(str(requirements)), "PHASE 1: assignment requirements contain placeholders")
@@ -312,6 +387,10 @@ def validate(experiment: Path, phase: int, candidate: bool = False) -> Audit:
         ai_use = integrity.get("ai_use", {})
         audit.require(ai_use.get("status") not in {None, "unknown"}, "PHASE 1: AI-use policy must be resolved before work starts")
         audit.require(ai_use.get("user_confirmed") is True, "PHASE 1: user must confirm the AI-use policy")
+        authorship = integrity.get("writing_authorship", {})
+        audit.require(authorship.get("body_prose_owner") == "user", "PHASE 1: body prose must be owned by the user")
+        audit.require(authorship.get("ai_may_generate_body") is False, "PHASE 1: AI body-prose generation must be disabled")
+        audit.require(authorship.get("meaning_change_requires_user_approval") is True, "PHASE 1: meaning-changing edits must require user approval")
         for document in context_index.get("documents", []):
             relative = document.get("path", "")
             target = (experiment / relative).resolve()
@@ -424,6 +503,26 @@ def validate(experiment: Path, phase: int, candidate: bool = False) -> Audit:
         for claim in claims:
             if claim.get("source_ids"):
                 audit.require(claim.get("claim_id") in source_audit, f"PHASE 5: SOURCE_AUDIT lacks {claim.get('claim_id')}")
+        writing_plan = check_writing_plan(
+            experiment,
+            audit,
+            require_prose=False,
+            example_only=workflow_state.get("example_only") is True,
+        )
+        rubric_ids = {item.get("rubric_id") for item in requirements.get("rubric_criteria", [])}
+        evidence_ids = source_ids | result_ids | claim_ids
+        for slot in writing_plan.get("slots", []):
+            audit.require(set(slot.get("rubric_ids", [])) <= rubric_ids, f"PHASE 5: writing slot {slot.get('slot_id')} has unknown rubric IDs")
+            audit.require(set(slot.get("evidence_ids", [])) <= evidence_ids, f"PHASE 5: writing slot {slot.get('slot_id')} has unknown evidence IDs")
+        check_style_contract(audit)
+        overrides = load_structured(experiment, "spec/STYLE_OVERRIDES.yaml", audit)
+        allowed = {str(item.get("setting")) for item in overrides.get("overrides", [])}
+        check_tex(experiment, audit, allowed, allow_planned_references=True)
+        if skeleton:
+            skeleton_pdf = experiment / "build" / "skeleton.pdf"
+            audit.file(skeleton_pdf, "PHASE 5: skeleton PDF is missing")
+            if skeleton_pdf.is_file():
+                check_pdf_a4(skeleton_pdf, audit)
 
     if phase >= 6:
         approved, reason = approval_current(experiment, "G2")
@@ -432,6 +531,12 @@ def validate(experiment: Path, phase: int, candidate: bool = False) -> Audit:
         overrides = load_structured(experiment, "spec/STYLE_OVERRIDES.yaml", audit)
         allowed = {str(item.get("setting")) for item in overrides.get("overrides", [])}
         check_tex(experiment, audit, allowed)
+        check_writing_plan(
+            experiment,
+            audit,
+            require_prose=True,
+            example_only=workflow_state.get("example_only") is True,
+        )
         text_without_placeholders(experiment / "HANDOFF.md", audit, 6)
         requirements = requirements or load_structured(experiment, "spec/ASSIGNMENT_REQUIREMENTS.yaml", audit)
         rubric_path = experiment / "RUBRIC_TRACEABILITY.md"
@@ -446,22 +551,13 @@ def validate(experiment: Path, phase: int, candidate: bool = False) -> Audit:
         worklog = experiment / "WORKLOG.md"
         text = worklog.read_text(encoding="utf-8") if worklog.is_file() else ""
         audit.require("Codex再監査: 完了" in text, "PHASE 7: Codex re-audit is not recorded as complete")
-        antigravity_not_used = any(marker in text for marker in (
-            "Antigravity利用: なし",
-            "Antigravity変更受領: 完成例はCodex初稿のため変更なし",
-            "Antigravity変更受領: なし",
-        ))
-        baseline = experiment / "quality" / "POLISH_BASELINE.json"
-        audit.require(antigravity_not_used or baseline.is_file(), "PHASE 7: polish baseline is required when Antigravity edited the report")
-        if baseline.is_file():
-            from polish_guard import baseline_path, protected_snapshot
-
-            expected = yaml.safe_load(baseline_path(experiment).read_text(encoding="utf-8"))
-            audit.require(expected == protected_snapshot(experiment / "report"), "PHASE 7: protected technical content changed during polishing")
+        audit.require("本人原文保全: 完了" in text, "PHASE 7: preservation of user-authored prose is not recorded")
+        audit.require(any(marker in text for marker in ("意味変更: なし", "意味変更: ユーザー承認済み")), "PHASE 7: semantic-edit status is unresolved")
 
     if phase >= 8:
         required_files = [
             "HANDOFF.md",
+            "PROFESSOR_EVALUATION.md",
             "SOURCE_AUDIT.md",
             "RESULT_TRACEABILITY.md",
             "WORKLOG.md",
@@ -470,6 +566,7 @@ def validate(experiment: Path, phase: int, candidate: bool = False) -> Audit:
             for name in required_files:
                 audit.file(experiment / name, f"PHASE 8: missing candidate artifact {name}")
             audit.file(experiment / "quality" / "QUALITY_REVIEW.yaml", "PHASE 8: missing internal quality review")
+            audit.file(experiment / "quality" / "PROFESSOR_REVIEW.yaml", "PHASE 8: missing professor review")
         else:
             base = experiment / "deliverables"
             for name in [*required_files, "report.pdf"]:
@@ -482,6 +579,7 @@ def validate(experiment: Path, phase: int, candidate: bool = False) -> Audit:
         audit.require(final_check.get("technical_review", {}).get("status") == "passed", "PHASE 8: technical review must be passed")
 
         quality = load_structured(experiment, "quality/QUALITY_REVIEW.yaml", audit)
+        professor = load_structured(experiment, "quality/PROFESSOR_REVIEW.yaml", audit)
         rubric_reviews = quality.get("rubric", [])
         reviewed_ids = unique_ids(rubric_reviews, "rubric_id", audit, 8)
         requirements = requirements or load_structured(experiment, "spec/ASSIGNMENT_REQUIREMENTS.yaml", audit)
@@ -499,6 +597,15 @@ def validate(experiment: Path, phase: int, candidate: bool = False) -> Audit:
         }
         for requirement_id in required_requirements:
             audit.require(requirement_id in quality_text, f"PHASE 8: QUALITY_REVIEW lacks mandatory {requirement_id}")
+        professor_ids = unique_ids(professor.get("rubric", []), "rubric_id", audit, 8)
+        audit.require(required_rubrics <= professor_ids, f"PHASE 8: professor review misses rubric IDs: {sorted(required_rubrics - professor_ids)}")
+        for item in professor.get("rubric", []):
+            if item.get("rubric_id") in required_rubrics:
+                audit.require(item.get("verdict") == "met", f"PHASE 8: professor review did not meet {item.get('rubric_id')}")
+        audit.require(professor.get("overall", {}).get("verdict") == "ready", "PHASE 8: professor review requires revision")
+        professor_text = text_without_placeholders(experiment / "PROFESSOR_EVALUATION.md", audit, 8)
+        for rubric_id in required_rubrics:
+            audit.require(rubric_id in professor_text, f"PHASE 8: PROFESSOR_EVALUATION lacks {rubric_id}")
 
         oral_path = experiment / "ORAL_DEFENSE.md"
         if oral_path.is_file():
@@ -513,6 +620,10 @@ def validate(experiment: Path, phase: int, candidate: bool = False) -> Audit:
             load_structured(experiment, "IMPROVEMENT_BACKLOG.yaml", audit)
         pdf = experiment / "build" / "final-candidate.pdf" if candidate else experiment / "deliverables" / "report.pdf"
         page_count = check_pdf_a4(pdf, audit) if pdf.is_file() else 0
+        if pdf.is_file():
+            from pypdf import PdfReader
+            extracted = "\n".join((page.extract_text() or "") for page in PdfReader(str(pdf)).pages)
+            audit.require(not re.search(r"文章\s*[0-9]+", extracted), "PHASE 8: final PDF still contains prose-slot markers")
         rendered_pages = final_check.get("visual_review", {}).get("rendered_pages")
         audit.require(rendered_pages == page_count, f"PHASE 8: rendered page count {rendered_pages} does not match PDF page count {page_count}")
         render_manifest = load_structured(experiment, "quality/RENDER_MANIFEST.yaml", audit)
@@ -545,12 +656,13 @@ def main() -> int:
     parser.add_argument("experiment", type=Path)
     parser.add_argument("--phase", type=int, choices=range(0, 9), required=True)
     parser.add_argument("--candidate", action="store_true", help="validate build/final-candidate.pdf before user release approval")
+    parser.add_argument("--skeleton", action="store_true", help="require and inspect build/skeleton.pdf for G2")
     args = parser.parse_args()
     experiment = args.experiment.resolve()
     if not experiment.is_dir():
         parser.error(f"not a directory: {experiment}")
 
-    audit = validate(experiment, args.phase, candidate=args.candidate)
+    audit = validate(experiment, args.phase, candidate=args.candidate, skeleton=args.skeleton)
     label = "最終候補検査" if args.candidate and args.phase == 8 else f"PHASE 0-{args.phase}"
     if audit.errors:
         print(f"FAIL: {label}")

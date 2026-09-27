@@ -29,6 +29,10 @@ requirements:
     source_locator: "フレームワーク共通様式"
     mandatory: true
     verification_method: "自動検査とPDF目視確認"
+rubric_source:
+  status: not_provided_internal
+  confirmed_by_user: true
+  note: "実在授業の採点基準は存在しないため、完成例専用の内部品質基準であることを確認した。"
 rubric_criteria:
   - rubric_id: RUB-001
     criterion: "目的、方法、結果、考察、結論の論理が連続し、観測事実と解釈が分離されている。"

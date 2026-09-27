@@ -55,7 +55,7 @@ def generate_meta(experiment: Path) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("experiment", type=Path)
-    parser.add_argument("--mode", choices=("draft", "candidate"), default="draft")
+    parser.add_argument("--mode", choices=("skeleton", "draft", "candidate"), default="draft")
     args = parser.parse_args()
 
     root = repo_root()
@@ -63,7 +63,7 @@ def main() -> int:
     if not (experiment / "report" / "main.tex").is_file():
         parser.error(f"not an experiment directory: {experiment}")
 
-    required_phase = 7 if args.mode == "candidate" else 6
+    required_phase = 7 if args.mode == "candidate" else (5 if args.mode == "skeleton" else 6)
     subprocess.run(
         [sys.executable, str(root / "scripts" / "validate_experiment.py"), str(experiment), "--phase", str(required_phase)],
         cwd=root,
@@ -74,6 +74,11 @@ def main() -> int:
     report_dir = experiment / "report"
     build_dir = experiment / "build"
     build_dir.mkdir(exist_ok=True)
+    (build_dir / "report-mode.tex").write_text(
+        f"\\def\\reportskeleton{{{1 if args.mode == 'skeleton' else 0}}}\n",
+        encoding="utf-8",
+        newline="\n",
+    )
     tex_cache = build_dir / "tex-cache"
     tex_cache.mkdir(exist_ok=True)
 
@@ -123,7 +128,12 @@ def main() -> int:
         if found:
             raise RuntimeError(f"TeX quality warnings must be resolved: {', '.join(found)}")
 
-    output = build_dir / ("draft.pdf" if args.mode == "draft" else "final-candidate.pdf")
+    names = {
+        "skeleton": "skeleton.pdf",
+        "draft": "draft.pdf",
+        "candidate": "final-candidate.pdf",
+    }
+    output = build_dir / names[args.mode]
     shutil.copy2(pdf, output)
     print(output)
     return 0

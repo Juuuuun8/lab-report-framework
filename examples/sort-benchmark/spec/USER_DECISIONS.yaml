@@ -21,7 +21,7 @@ questions:
     required_before_experiment: true
     status: resolved
     question: "追加のファイル名、ページ数、締切、提出形式の指定がありますか。"
-    decision: "A4 PDFと4つの補助成果物を作る。ページ数制限は設定しない。"
+    decision: "A4 PDFと5つの補助成果物を作る。ページ数制限は設定しない。"
     decided_by: user
     decided_at: "2026-09-24T14:07:00+09:00"
     rationale: "フレームワーク要件に基づく。"

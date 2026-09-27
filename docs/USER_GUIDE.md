@@ -1,696 +1,301 @@
-# lab-report-framework 詳細利用ガイド
+# 詳細利用ガイド
 
-## 1. このリポジトリの目的
+## 1. 目的と責任境界
 
-このリポジトリは、大学の理工系実験レポートを「見た目のテンプレート」だけでなく、実習書の読解、事前確認、実験計画、実行、分析、出典検証、執筆、校正、最終検査まで一つの再現可能な流れとして管理するための環境である。
+この環境は、学生本人が本文を書き、Codexが実験前の確認、実験支援、分析、出典検証、レポート骨格、TeX組版、品質監査を担当する。成績を保証するものではない。教員指示と採点基準への適合を高い再現性で確認し、数値転記、出典不一致、様式崩れ、AIによる無断代筆を防ぐための仕組みである。
 
-最優先するのは各授業の実習書、課題文、教員の明示指示である。共通様式は、個別指定がない箇所にだけ適用する。過去レポートの外観は規範にせず、情報処理学会の執筆作法と、日本の大学が公開する理工系レポート指針から授業レポートに適する部分を採用している。
+優先順位は次のとおりである。
 
-この仕組みが守るものは次の6点である。
+1. 実習書、課題文、教員の明示指示、採点基準
+2. 授業・大学のAI利用規則
+3. このリポジトリの共通規則
+4. 過去レポートの個人的傾向
 
-1. 根拠のない推測をしない。
-2. 生データから本文の数値まで追跡できるようにする。
-3. 外部主張は実際に出典本文を確認してから引用する。
-4. PDFだけでなく、判断、出典、結果、作業履歴も引き渡す。
-5. 課題要件と採点基準を本文位置・証拠へ結び付ける。
-6. AI利用条件、本人実施範囲、説明可能性を提出前に確認する。
-
-この仕組みは、AIへ丸投げして自動的にレポートを完成させるものではない。Codexは大量の読解、整合確認、計算、出典確認、TeX、監査を担当し、ユーザーは本人にしか確認できない実施事実、個人情報、結果への認識、説明可能性、提出可否を3回の承認で判断する。これにより、信頼性を落とさず、ユーザーへ機械ログを読ませず、AIにも同じ資料を何度も読ませない。
+過去レポートの見た目は規範にしない。
 
 ## 2. 作業ディレクトリ
 
-Codexの作業ディレクトリには、必ずこのリポジトリのルートを指定する。任意でAntigravityを使う場合も同じルートを指定する。
+GitHubからリポジトリを丸ごと取得し、Codexでは必ず次のルートを開く。
 
 ```text
-lab-report-framework/          ← この階層を開く
+lab-report-framework/        ← ここを開く
 ├─ AGENTS.md
-├─ ANTIGRAVITY.md
-├─ GEMINI.md
-├─ .agents/skills/japanese-report-polish/
-├─ README.md
-├─ docs/
+├─ config/
 ├─ rules/
 ├─ schemas/
 ├─ scripts/
-├─ tex/
 ├─ templates/
-├─ experiments/
-└─ examples/
+├─ tex/
+├─ examples/
+└─ experiments/
 ```
 
-`experiments/<id>/` や `report/` を直接作業ディレクトリにすると、上位の役割分担、共通規則、検査スクリプト、TeXクラスを見落とすため使用しない。作業対象は会話または作業ログで `experiments/<id>/` と明示する。
+`experiments/<id>/` だけを開くと、ルートの `AGENTS.md` と共通規則を利用できない。
 
-## 3. 必要な環境
+## 3. AIと人間の分担
 
-必須:
+ユーザーが行うこと:
 
-- Python 3.10以上
-- PyYAML
-- LuaLaTeX
-- latexmk
+- 本文の全文章を書く。
+- 自分しか知らない実施事実、失敗、除外、個人情報を確認する。
+- 採点基準、実験計画、骨格、意味変更、最終提出を判断する。
+- 最終PDFを自分でも読み、自分の言葉で説明できるか確認する。
 
-検査とPDF画像化に使用:
+Codexが行うこと:
 
-- pypdf
-- PyMuPDF
+- 実習書と採点基準の全読、質問整理。
+- 実験計画、実験支援、分析、図表・式・コードの準備。
+- 外部サイト本文の確認と主張との照合。
+- 見出しと文章枠を含む骨格PDFの生成。
+- ユーザー原文の保全、誤字脱字確認、TeX組版。
+- 数値、引用、論理、様式、PDFの監査。
+- 採点基準に沿う教授視点の模擬評価。
 
-Python依存関係はリポジトリルートで次のように導入する。
+Pythonはハッシュ、スキーマ、再生成、ファイル存在、PDF寸法など決定的検査だけを行う。意味理解、出典の妥当性、採点判断はCodexとユーザーが担う。
 
-```powershell
-python -m pip install -r requirements.txt
-```
+Antigravityや第二AI校閲は使用しない。
 
-TeX環境には、LuaLaTeX、LuaTeX-ja、Harano Ajiフォント、latexmk、および `tex/labreport.cls` が読み込むパッケージが必要である。WindowsではTeX Liveを想定しているが、コマンド名が同じなら他環境でもよい。
+## 4. 最初に渡すもの
 
-## 4. ルート直下のファイルと役割
+可能な限り最初に次を渡す。
 
-### `AGENTS.md`
+- 実習書の全ページ
+- 課題文、提出方法、締切
+- 採点表・ルーブリック・教員の口頭指示
+- AI利用規則
+- 配布コード、テンプレート、データ
+- 表紙に必要な項目と値
+- 使用できる装置、OS、ソフトウェア、時間上の制約
 
-Codexがルートから自動発見する、短い常設規約である。三つの承認境界、データ保全、出典検証、TeX、目視確認を定め、詳細規則は作業に応じて読む。
+採点基準が見つからない場合、Codexはそれを勝手に教員基準として補わない。一般的な理工系レポート品質を内部基準として提案し、「教員提供ではない」ことをG1で確認する。
 
-### `ANTIGRAVITY.md`
+## 5. 三つの承認
 
-任意でAntigravityを使う場合の日本語推敲契約である。数値、単位、式、図表、コード、引用番号、断定の強さ、TeXレイアウトは変更してはならない。変更後はCodexが再監査する。
+### G1 実験前確認
 
-### `GEMINI.md` と `.agents/skills/`
+Codexは課題と採点基準を全読し、最大5項目の確認票を作る。ユーザーは次を確認する。
 
-Antigravityを利用する場合に日本語推敲契約へ到達するための入口である。技術内容の作成や修正には使わない。
+- 課題解釈と提出条件
+- 採点基準の項目、重み、合格条件、出典位置
+- 表紙情報
+- AI利用範囲と本文本人執筆の契約
+- 実験条件、試行回数、除外基準、安全性
 
-### `README.md`
+問題なければ `承認 G1` と回答する。G1前に実験は開始しない。
 
-最短の導入手順と主要原則を示す入口である。詳細仕様は本書と `rules/` が担う。
+### G2 証拠・骨格確認
 
-### `requirements.txt`
+Codexは実験・分析・出典検証を終え、次を含む `build/skeleton.pdf` を作る。
 
-Python側の依存パッケージを固定する入口である。
+- 表紙
+- 実習書指定の見出し
+- 図、表、数式、コード、参考文献
+- 本文を入れる `（文章1）`、`（文章2）` などの枠
 
-## 5. ディレクトリ構成
+各枠には `spec/WRITING_PLAN.yaml` で目的、必須論点、予定する図表参照、Evidence ID、Rubric IDが付く。ユーザーはデータが本人のものか、除外と失敗が正しいか、見出しと図表の順序が意図に合うか、各文章枠の分け方が書きやすいかを確認する。問題なければ `承認 G2` と回答する。
 
-### `rules/`
+### G3 完成稿・提出確認
 
-人間とエージェントが読む規則である。
+全文章の組版、PDF監査、採点基準別の教授視点評価が終わった後に行う。ユーザーは次を確認する。
 
-- `00-design-basis.md`: 参照した公式資料、採用・不採用の判断、独自決定。
-- `10-layout-and-typography.md`: 用紙、余白、書体、表紙、文章。
-- `20-figures-and-tables.md`: 図表の参照順、配置、キャプション、軸、罫線。
-- `30-equations-and-code.md`: 数式、単位、コードリスト。
-- `40-sources-and-citations.md`: 出典の優先順位、検証記録、参考文献。
-- `50-evidence-and-writing.md`: 生データ、処理データ、結果、考察、追跡可能性。
-- `60-deliverables.md`: 最終PDF以外に必要な成果物。
-- `70-workflow-gates.md`: PHASE 0〜8の作業と合格条件。
-- `80-system-evolution.md`: 安全な自己改善、事前承認が必要な変更、改善候補の上限。
+- 本文が自分の原文に基づくか
+- 意味を変える修正が承認済みか
+- 氏名、学生番号、科目、日付
+- 図表、文字、余白、改ページ
+- 自分で説明できない記述がないか
+- 教授視点評価の弱点を理解したか
+- 提出用へ固定してよいか
 
-### `schemas/`
+問題なければ `承認 G3` と回答する。
 
-YAMLファイルの期待構造をJSON Schemaで記述する。`validate_experiment.py` は各YAMLを対応スキーマで検査したうえで、ID間参照や意味上のゲートも検査する。
+## 6. 本文の送り方
 
-### `scripts/`
-
-- `doctor.py`: Python依存、TeX、回帰テスト、完成例の再現性と承認状態を一括診断する。
-- `new_experiment.py`: 正規テンプレートを複製し、新しい実験を作る。
-- `workflow.py`: G1〜G3の確認票、承認ハッシュ、状態、提出版への昇格を管理する。
-- `reproduce.py`: 宣言済み分析コマンドを複製環境で再実行し、出力が一致するか検査する。
-- `build_report.py`: 表紙YAMLから `meta.tex` を生成し、作業用PDFまたは最終候補PDFを作る。提出版には直接触れない。
-- `validate_experiment.py`: 指定Phaseまでの累積ゲートを検査する。
-- `polish_guard.py`: 日本語推敲の前後で数値、単位、参照、引用、数式、図表、コードを比較する。
-- `render_pdf.py`: PDF全ページをPNGへ変換し、目視確認を可能にする。
-
-### `tex/`
-
-`labreport.cls` を置く。全実験で共通の用紙、文字、見出し、表紙、キャプション、フロート、コード、参考文献の表示を定義する。
-
-共通様式の不意な揺れは `config/style-contract.yaml` の正規化ハッシュで検出する。意図的にクラスを改訂する場合は、完成例を再ビルドして全ページを確認し、PHASE 8へ合格した後にだけcontractのrevisionとハッシュを更新する。
-
-### `templates/experiment/`
-
-新規実験の原型である。直接レポートを書く場所ではない。共通テンプレートを改善する場合だけ編集する。
-
-### `experiments/`
-
-実際の授業・実験ごとの作業場所である。1実験につき1ディレクトリを作る。
-
-### `examples/sort-benchmark/`
-
-架空データを使った完成見本である。レイアウト、追跡資料、検査フローを確認するためのもので、実測結果や提出用レポートではない。
-
-## 6. 新しい実験の作成
-
-通常はCodexへ実習書を渡し、「実験前に確認すべきことをまとめて」と依頼する。Codexが診断と作成を行う。次は内部で使うコマンドである。
-
-```powershell
-python scripts/new_experiment.py sorting-2026 --title "ソートアルゴリズムの性能評価"
-```
-
-`experiment_id` は小文字英数字とハイフンだけを使用する。先頭は小文字英数字とする。同名ディレクトリが存在する場合は上書きせず停止する。
-
-作成後の基本構成は次のとおりである。
+G2後、Codexが文章枠ごとに「何をチェックして書くか」を示す。ユーザーは次の形式で送る。
 
 ```text
-experiments/sorting-2026/
-├─ instructions/
-│  └─ INPUT_INVENTORY.md
-├─ spec/
-│  ├─ REPORT_META.yaml
-│  ├─ USER_DECISIONS.yaml
-│  ├─ EXPERIMENT_PLAN.yaml
-│  ├─ ASSIGNMENT_REQUIREMENTS.yaml
-│  ├─ ACADEMIC_INTEGRITY.yaml
-│  ├─ EXECUTION_MANIFEST.yaml
-│  ├─ CONTEXT_INDEX.yaml
-│  ├─ REPRODUCE.yaml
-│  ├─ SOURCES.yaml
-│  ├─ CLAIMS.yaml
-│  └─ STYLE_OVERRIDES.yaml
-├─ data/
-│  ├─ raw/
-│  └─ processed/
-├─ analysis/
-├─ report/
-│  ├─ main.tex
-│  ├─ meta.tex
-│  └─ sections/
-├─ quality/
-│  ├─ FINAL_CHECK.yaml
-│  ├─ QUALITY_REVIEW.yaml
-│  └─ RENDER_MANIFEST.yaml       # 最終候補の画像化時に生成
-├─ workflow/
-│  ├─ STATE.yaml
-│  ├─ G1_REVIEW.md
-│  ├─ G2_REVIEW.md
-│  └─ G3_REVIEW.md
-├─ QUESTIONS.md
-├─ HANDOFF.md
-├─ SOURCE_AUDIT.md
-├─ RESULT_TRACEABILITY.md
-└─ WORKLOG.md
+文章1:
+ここに自分で書いた文章。
+
+文章2:
+ここに自分で書いた文章。
 ```
 
-`RUBRIC_TRACEABILITY.md` と `ORAL_DEFENSE.md` は必要な実験だけ追加する。改善候補は実験ごとの専用ファイルを作らず、実験固有なら `WORKLOG.md`、共通ならリポジトリ側で管理する。
+一度に全部送っても、数枠ずつ送ってもよい。トークン節約のため、Codexは受領した枠と直接関係する執筆メモ・証拠だけを読む。
 
-## 7. 実習書を受け取った直後に行うこと
+保存先:
 
-1. 実習書、課題文、配布コード、データ、提出要件を `instructions/` または適切な入力場所へ保存する。
-2. 元ファイルは変更しない。
-3. ファイル名、種類、ページ数、ハッシュ、判読可否、用途を `instructions/INPUT_INVENTORY.md` に記録する。
-4. 実習書を最初から最後まで読む。必要なページだけを拾い読みしてはならない。
-5. 提出形式、必須章、実験条件、評価項目、禁止事項、指定表紙、期限を抽出する。
-6. 不明点とユーザーが決める事項を `QUESTIONS.md` にまとめる。可能な限り実験前に一括して聞く。
-7. 回答を `spec/USER_DECISIONS.yaml` に保存する。
-8. PHASE 1が合格するまで実験を開始しない。
+- 原文: `prose/original/P-001.md`
+- 組版後: `prose/typeset/P-001.tex`
+- 対応表とハッシュ: `spec/WRITING_PLAN.yaml`
 
-## 8. `REPORT_META.yaml`
+Codexが自動適用できる変更:
 
-表紙と文書の基本設定を持つ。
+- 明白な誤字脱字
+- 句読点、全半角、表記揺れ、である調の統一
+- TeX特殊文字の処理
+- ユーザーが書いた式の数式環境化
+- 単位の組版
+- 図表・式・参考文献の番号を相互参照へ変換
+- 確定済み出典への引用コマンド挿入
 
-```yaml
-cover:
-  course_name: "情報工学実験"
-  title: "実験題目"
-  subtitle: "任意の副題"
-  fields:
-    - label: "所属"
-      value: "情報理工学部 情報工学科"
-    - label: "学生番号"
-      value: "00000000"
-    - label: "氏名"
-      value: "山田 太郎"
-    - label: "実験日"
-      value: "2026年9月18日"
-document:
-  language: ja
-  paper: A4
-  columns: 1
-  body_font_pt: 10.5
-  punctuation: "，．"
-```
-
-`fields` は任意個数であり、所属、学年、班、共同実験者、担当教員、提出日などを授業ごとに追加・削除できる。固定項目ではない。項目一覧はラベル列と値列を一つのブロックとしてページ中央に配置し、値は読みやすい左揃えとする。
+本人承認が必要な変更:
 
-`report/meta.tex` はビルド時に自動生成されるため、直接編集しない。変更は必ず `REPORT_META.yaml` に行う。
+- 数値、符号、単位、有効数字の変更
+- 事実、条件、因果関係、比較方向の変更
+- 結論、断定の強さ、適用範囲の変更
+- 新しい説明、主張、参考文献の追加
+- 本人が書いていない段落の補完
 
-## 9. `USER_DECISIONS.yaml`
+未入力枠が一つでもあれば最終候補は生成できない。
 
-実習書を全読した事実と、質問に対する決定を保存する。
-
-- `instructions_read_complete`: 全読済みなら `true`。
-- `instructions_read_at`: 読了日時。
-- `questions`: `Q-001` 形式の質問一覧。
-- `required_before_experiment`: 実験前に必須か。
-- `status`: `open`、`resolved`、`delegated`。
-- `decision`: 採用した回答。
-- `decided_by`: `user` または `codex`。
-- `decided_at`: 決定日時。
-- `rationale`: 判断理由。
+## 7. PHASE 0〜8
 
-必須質問を `delegated` にするのは、ユーザーがCodexへ判断を明示的に委任した場合だけである。情報がないことを委任とみなしてはならない。
-
-## 10. `EXPERIMENT_PLAN.yaml`
-
-実験開始前に決める事項を保存する。
-
-- `status`: 作成中は `draft`、承認後は `approved`。
-- `objective`: 何を明らかにするか。
-- `independent_variables`: 操作する変数。
-- `dependent_variables`: 測定する変数。
-- `controlled_variables`: 一定に保つ条件。
-- `replications`: 本試行の反復回数。
-- `warmups`: ウォームアップ回数。
-- `random_seed`: 必要なら乱数種。
-- `execution_order`: 条件の実行順序とランダム化方法。
-- `exclusion_rules`: 除外条件。結果を見て後付けしない。
-- `stop_conditions`: 安全、時間、異常に関する停止条件。
-- `analysis`: 集計、統計、図表の作り方。
-- `risks`: 実験上・解釈上のリスク。
-- `safety_reviewed`: 安全確認済みなら `true`。
-
-計画変更は上書きして終わらせず、変更理由と影響を `WORKLOG.md` に残す。
-
-## 11. データと分析
-
-### `data/raw/`
-
-装置出力、ログ、観察記録などの未加工データを置く。一度記録した生データは上書きしない。再実験や再取得は別ファイルとして保存し、旧データとの関係をログへ記す。
-
-### `data/processed/`
-
-単位変換、整形、除外、集計前処理を行ったデータを置く。どの生データとどのスクリプトから生成したかを追跡可能にする。
-
-### `analysis/`
-
-処理、統計、表、図を再生成するコードを置く。手作業で数値を転記して二重管理しない。ソフトウェア版、乱数種、実行条件が結果に影響する場合は記録する。
-
-失敗試行、欠測、外れ値、計画逸脱は隠さない。除外時は、事前規則または合理的な理由と影響を記録する。
-
-## 12. レポートの標準様式
-
-実習書の指定がない場合に次を適用する。
-
-### ページ
-
-- A4縦。
-- 1段組。
-- 上下左右25 mm。
-- 表紙にページ番号を表示しない。
-- 本文最初のページを1ページとする。
-- ヘッダは置かない。
-- フッタ中央にページ番号だけを置く。
-- 原則として白黒でも意味が失われないようにする。
-
-### 文字
-
-- 本文: 10.5 pt相当、明朝体。
-- 行送り: 約16.2 pt。
-- 見出し: ゴシック体。節は本文より一段大きく太字。
-- キャプション: 9 pt相当、明朝体、立体。一行は中央、複数行は左から読める整列。
-- コード: 等幅書体。
-- URL: 本文と調和する書体、黒色、枠なし、自然な折返し。
-- 本文字下げ: 1全角。
-- 句読点: 標準は「，」「．」。実習書指定があれば従う。
-- 文体: 「である」調を標準とし、混在させない。
-
-### 表紙
-
-- 上部に授業名。
-- 中央付近に題目と任意の副題。
-- 下部にユーザー指定項目のブロック。
-- 項目ブロック全体の左右中央をページ中央に合わせる。
-- 項目名は右揃え、値は左揃え。
-- ロゴ、飾り枠、色面、概要、キーワードは標準では置かない。
-- 表紙内容は `REPORT_META.yaml` だけから生成する。
-
-### 本文開始
-
-表紙の次はいきなり「1 目的」など実習書指定の最初の章へ入る。タイトル、氏名、所属、概要、キーワードを本文冒頭へ再掲しない。
-
-章構成は実習書を優先する。指定がない場合は「目的」「原理または関連知識」「実験方法」「結果」「考察」「結論」「参考文献」を基本候補とするが、不要な章を形式のためだけに増やさない。
-
-## 13. 図の規則
-
-1. 本文で図の目的または読み取る点を述べ、「図 1」のように先に参照する。
-2. 参照後の近傍へ置く。
-3. ページ上端または下端へのフロートを基本にする。
-4. 段落途中へ `[H]` で無理に固定しない。
-5. キャプションは図の下に置く。
-6. 軸に量と単位を書く。
-7. 軸名、凡例、注記は英語が必要な場合を除き日本語にする。
-8. 色だけに依存せず、線種とマーカーも変える。
-9. 3D効果、濃い背景、不要な補助線を避ける。
-10. 本文で主要傾向、比較、例外を説明する。
-
-TeXでは原則として `[tbp]` を使う。参照したページに収まらない場合は、次ページ上端が自然な配置である。
-
-## 14. 表の規則
+- PHASE 0: 受領物を保全し、欠落と判読可否を記録する。
+- PHASE 1: 要求、採点基準、AI規則、本人執筆契約を確定する。
+- PHASE 2: 実験・分析計画を作り、G1へ進む。
+- PHASE 3: 実験を実施し、生データと逸脱を封印する。
+- PHASE 4: 分析を再生成可能にし、主要数値を追跡可能にする。
+- PHASE 5: 出典を本文照合し、骨格PDFと文章枠を作り、G2へ進む。
+- PHASE 6: 本人原文を受領・保全し、組版する。
+- PHASE 7: 原文、意味、数値、引用、要求、採点基準を再監査する。
+- PHASE 8: 全ページ目視、技術検査、教授視点評価を行い、G3後に固定する。
 
-1. 本文で先に「表 1」を参照する。
-2. キャプションは表の上に置く。
-3. 見出しは日本語を基本とする。
-4. 量と単位を明示する。
-5. 縦罫線を使わず、必要最小限の横罫線にする。
-6. 桁数、有効数字、単位を揃える。
-7. 分析出力から生成し、本文との二重管理を避ける。
-8. 長い表は付録または複数ページ表とし、見出しを繰り返す。
+## 8. 主要ファイル
 
-## 15. コードリストの規則
+`spec/ASSIGNMENT_REQUIREMENTS.yaml`:
+課題要求、採点基準、出典位置、重み、合格条件、教員提供か内部基準かを記録する。
 
-- 本文で先に「リスト 1」を参照する。
-- キャプションはコードの上に置く。
-- 議論に必要な最小部分だけを載せる。
-- 等幅書体、行番号、控えめな枠と背景を使う。
-- 長い完全版は別ファイルまたは付録に置く。
-- 抜粋や省略は明記する。
-- 端末出力はスクリーンショットではなくテキストを使う。
-- APIキー、認証情報、個人情報、端末固有の絶対パスを載せない。
+`spec/ACADEMIC_INTEGRITY.yaml`:
+AI利用規則、開示、本文本人執筆、意味変更の承認条件を記録する。
 
-## 16. 数式と単位
+`spec/EXPERIMENT_PLAN.yaml`:
+目的、変数、反復、順序、除外、停止条件、分析方法を事前登録する。
 
-- 数式も文章の一部として扱い、必要なら句読点を付ける。
-- 本文で参照する式だけに番号を付ける。
-- 本文では「式 (1)」のように参照する。
-- 使用する記号は式の前後で定義する。
-- 変数は斜体、演算子、単位、関数名は立体とする。
-- 数値と単位を分離し、SI単位系を基本とする。
-- 有効数字は測定精度と処理方法に合わせる。
-- 長い導出が本文の論理を分断する場合は付録へ移す。
+`spec/WRITING_PLAN.yaml`:
+文章枠ID、表示名、節、目的、必須論点、予定する図表参照、証拠、採点基準、原文・組版ファイル、原文ハッシュ、意味変更状態を記録する。G2の承認値は骨格項目だけを固定し、本文受領で変わる状態・ハッシュ・校正メモは除外する。G3ではファイル全体を固定する。
 
-## 17. 結果と考察
+`spec/SOURCES.yaml` と `SOURCE_AUDIT.md`:
+発行主体、URL、言語、資料種別、確認箇所、対応主張、内容一致、採否理由を記録する。
 
-結果節には、測定・観察した事実と数値を書く。原因の推測、評価、感想を混ぜない。
+`RESULT_TRACEABILITY.md`:
+主要数値を生データ、処理、図表、本文へ接続する。
 
-考察節では、次を区別して書く。
+`quality/QUALITY_REVIEW.yaml`:
+要求・採点基準への適合と、技術内容の内部QAを記録する。
 
-- 観測事実
-- 出典で確認した既知の理論
-- それらから導く推論
-- 代替説明
-- 誤差要因と限界
-- 結果を適用できる範囲
+`quality/PROFESSOR_REVIEW.yaml`:
+採点基準別1〜5点、根拠、厳しい指摘、改善案、総合点、ready/reviseを機械検査可能に記録する。
 
-「理論どおりだった」だけで終わらせず、差、比、傾向、不確かさを定量的に示す。ただし少数点から一般法則を証明したように断定しない。
+`PROFESSOR_EVALUATION.md`:
+同じ評価を本人が読める形でまとめる。実際の担当教員の採点ではない。
 
-## 18. 参考文献の探索順位
-
-1. 日本語の一次情報、公的機関、標準化団体、大学、学会、公式ドキュメント。
-2. 英語の一次情報、標準、原著論文、公式ドキュメント。
-3. 専門家、大学、出版社などによる信頼できる日本語二次資料。
-4. その他の二次資料は、上位資料がなく、著者、根拠、更新日を評価できる場合だけ。
-
-日本語であることだけを理由に個人ブログを英語一次情報より優先してはならない。検索結果の要約、AI要約、ページタイトルだけで採用してはならない。
-
-## 19. `SOURCES.yaml` と出典検証
-
-各出典に `S-001` 形式のIDを付ける。
-
-- `language`: `ja` または `en`。
-- `source_class`: `primary_official`、`primary_research`、`secondary_reliable`。
-- `organization`: 発行主体。
-- `title`: ページまたは文献の題名。
-- `url`: 直接URL。
-- `published_or_updated_at`: 分かる場合の公開・更新日。
-- `accessed_at`: 実際に確認した日。
-- `verification.status`: 採用時は `verified`。
-- `locator`: 節、見出し、ページ、段落など確認位置。
-- `supports_claims`: `C-001` 形式の主張ID。
-- `match_note`: なぜその箇所が主張を支えるか。
-- `selection_note`: 採用理由と上位資料の探索結果。
-
-同じ情報を人間が一覧しやすい形で `SOURCE_AUDIT.md` にもまとめる。本文の参考文献は初出順とし、Web資料には発行主体、題名、URL、分かれば公開・更新日、アクセス日を記す。
-
-## 20. 結果の追跡可能性
-
-`RESULT_TRACEABILITY.md` では、各主要結果を `R-001` 形式で管理し、次を結び付ける。
-
-- 生データ
-- 処理済みデータ
-- 分析スクリプトと版
-- 集計式または処理方法
-- 出力された表・図
-- 本文の節と記述
-- 検算またはレビュー結果
-
-本文の数値を手で書き換えた場合は追跡が切れる。可能な限り分析結果から表や図を生成し、本文数値も同じ出力と照合する。
-
-## 21. PHASE 0〜8
-
-検査は累積である。たとえば `--phase 6` はPHASE 0から6までをまとめて確認する。ただしユーザー承認は9回ではなく、G1、G2、G3の3回だけである。内部PhaseはCodexが品質を担保するための細分化である。
-
-### PHASE 0: 受領・保全
-
-入力一覧を作り、欠落、破損、判読不能を確認する。元ファイルを変更しない。`INPUT_INVENTORY.md` が空またはプレースホルダを含むと不合格になる。
-
-### PHASE 1: 要求理解・事前質問
-
-実習書を全読し、質問へ回答を得る。`instructions_read_complete: true`、読了日時、必須質問の解決または明示委任、表紙情報が必要である。`ASSIGNMENT_REQUIREMENTS.yaml` に要求・採点基準・参照位置を記録し、`ACADEMIC_INTEGRITY.yaml` でAI利用規則を確定する。標準設定はA4・1段・10.5 ptである。
-
-### PHASE 2: 実験計画
-
-計画を `approved` にし、目的、変数、反復、実行順、除外規則、停止条件、分析方法、安全確認を確定する。PHASE 0〜2の自動検査後、`workflow/G1_REVIEW.md` をユーザーへ提示する。ユーザーが課題解釈、表紙、AI利用、実行可能性を確認し「承認 G1」と回答するまで実験を開始しない。
-
-### PHASE 3: 実験実行
-
-`data/raw/` に実データを保存し、`EXECUTION_MANIFEST.yaml` に環境と各実行・生データの対応を記録し、`WORKLOG.md` にPHASE 3の記録を残す。`workflow.py seal-data` が各生データのSHA-256とサイズを固定する。封印後の変更は検出される。
-
-### PHASE 4: 分析
-
-`data/processed/`、`analysis/`、完成した `RESULT_TRACEABILITY.md` が必要である。`REPRODUCE.yaml` にシェル文字列ではなく引数配列で分析手順を書き、`reproduce.py seal` で期待出力を固定する。`reproduce.py verify` は実験ディレクトリの複製上で分析を再実行し、出力ハッシュが完全一致するか確認する。
-
-### PHASE 5: 出典検証
-
-各出典が `verified` で、発行主体、題名、URL、アクセス日、言語、種別、確認位置、対応主張、一致説明、採用理由を持つことを確認する。`CLAIMS.yaml` の外部主張、結果、推論をSource IDとResult IDへ接続する。PHASE 3〜5と再現検査の合格後、G2でユーザーが「そのデータを実際に得たか」「除外や失敗は正しいか」「主要結果と考察の方向を採用してよいか」を確認する。G2前に本文を書かない。
-
-### PHASE 6: 執筆・TeX
-
-`labreport` クラスの使用、禁止構造の不使用、プレースホルダ解消、図表のキャプションとラベル、本文先行参照、図下・表上・リスト上キャプション、`HANDOFF.md` を検査する。採点対応は内部の `QUALITY_REVIEW.yaml` で管理し、人間向け一覧が必要な場合だけ `RUBRIC_TRACEABILITY.md` を作る。`[H]` と局所的な様式変更は、承認済み `STYLE_OVERRIDES.yaml` がない限り禁止である。
-
-### PHASE 7: 日本語推敲・再監査
-
-Codexが日本語と技術内容を再監査する。ユーザーがAntigravityによる第二校閲を希望した場合だけ、推敲前に `polish_guard.py snapshot`、推敲後に `polish_guard.py verify` を実行する。その後Codexが差分を再監査し、`WORKLOG.md` に `Codex再監査: 完了` を記録する。
-
-### PHASE 8: 提出物固定
-
-最終候補PDFに対して、目視・技術検査を `FINAL_CHECK.yaml`、内容・採点基準監査を内部の `QUALITY_REVIEW.yaml` で `passed` にし、表紙と本文を持つA4文書であることを検査する。G3でユーザーが個人情報、見た目、自分で説明できる内容、提出可否を確認する。G3承認後に限り `workflow.py release` が候補PDFと4つの補助成果物を `deliverables/` に固定する。
-
-各段階の実行例:
+## 9. PDF生成モード
 
 ```powershell
-python scripts/validate_experiment.py experiments/sorting-2026 --phase 0
-python scripts/validate_experiment.py experiments/sorting-2026 --phase 1
-python scripts/validate_experiment.py experiments/sorting-2026 --phase 2
+python scripts/build_report.py experiments/<id> --mode skeleton
+python scripts/build_report.py experiments/<id> --mode draft
+python scripts/build_report.py experiments/<id> --mode candidate
 ```
 
-失敗時は表示された項目を修正し、同じPhaseを再実行する。検査を無効化して先へ進めない。
+- `skeleton`: PHASE 5後。本文ファイルが存在しても強制的に `（文章N）` を表示する。
+- `draft`: G2後かつ全文章枠が完成したときの確認用。
+- `candidate`: PHASE 7合格後の最終候補。G3承認前は提出版ではない。
 
-## 22. TeX原稿の構成
-
-`report/main.tex` はクラス、表紙メタデータ、各節を読み込む入口である。本文は `report/sections/` に分ける。ファイル名の番号は読み込み順を分かりやすくするためのもので、章構成は実習書に合わせて変更できる。
-
-ラベルは種類が分かる接頭辞を使う。
-
-- 図: `fig:`
-- 表: `tab:`
-- 式: `eq:`
-- コード: `lst:`
-
-本文で `\ref` または `\eqref` を使い、表示番号を手入力しない。
-
-## 23. PDFのビルド
+G3承認後だけ次を実行する。
 
 ```powershell
-python scripts/build_report.py experiments/sorting-2026 --mode draft
-python scripts/build_report.py experiments/sorting-2026 --mode candidate
+python scripts/workflow.py release experiments/<id>
 ```
 
-この処理は次を行う。
+## 10. 標準様式
 
-1. draftはPHASE 0〜6、candidateはPHASE 0〜7を再検査し、不合格なら停止する。
-2. `REPORT_META.yaml` を読み、TeX特殊文字をエスケープする。
-3. `report/meta.tex` を再生成する。
-4. 実験固有の `build/tex-cache/` を使用する。
-5. `latexmk -lualatex` で `build/main.pdf` を作る。
-6. 未解決参照、未解決引用、重複ラベル、Overfull boxがあれば失敗させる。
-7. draftは `build/draft.pdf`、candidateは `build/final-candidate.pdf` へコピーする。
+個別指定がない場合だけ次を使う。
 
-`report/meta.tex` と `build/` は生成物である。表紙修正はYAML、本文修正は節ファイル、様式修正は `tex/labreport.cls` に行う。`deliverables/report.pdf` はG3承認後に `workflow.py release` だけが作る。
+- A4、1段組、本文10.5pt相当、上下左右25mm
+- 本文明朝、見出しゴシック
+- ページ番号のみ。ランニングヘッダなし
+- 表紙の項目ブロックは中央配置
+- 表紙後にタイトル、氏名、概要、キーワードを再掲しない
+- 図表・コードは本文で先に番号参照する
+- ページ上端・下端を基本とし、段落途中へ無理に固定しない
+- 節境界を越えてフロートさせない
+- 図キャプションは下、表とコードは上
+- 一行キャプションは中央、複数行は読みやすい左寄せ
+- 軸、凡例、表見出しは英語が必要な場合以外は日本語
+- URLは黒、枠なし、本文系統の書体で折り返す
+- 局所的な余白・字体変更は禁止し、授業指定の例外だけ `STYLE_OVERRIDES.yaml` に記録する
 
-## 24. 全ページの目視確認
+## 11. 出典の優先順位
+
+1. 日本語の一次情報、公的機関、公式文書
+2. 英語の一次情報、公式文書
+3. 信頼できる日本語二次資料
+
+検索結果の要約だけでは採用しない。実際の本文を開き、主張を直接支える箇所を特定する。適切な出典が不要な内容には、数を増やすためだけの参考文献を付けない。
+
+## 12. 教授視点評価
+
+完成候補に対し、G1で確定した全Rubric IDを評価する。各項目に次を必須とする。
+
+- 1〜5点
+- met / partially_met / not_met
+- レポート内の具体的根拠
+- 教授なら指摘する弱点
+- 改善案
+
+必須項目が `met` でなければ総合判定を `ready` にできず、G3準備を止める。模擬評価であり成績予測ではないことを常に明記する。
+
+## 13. 最終成果物
+
+- `report.pdf`: 提出用PDF
+- `HANDOFF.md`: 作業、判断、結果、本人原文、未解決事項
+- `PROFESSOR_EVALUATION.md`: 本人確認用の最終模擬評価
+- `SOURCE_AUDIT.md`: 外部主張と確認箇所
+- `RESULT_TRACEABILITY.md`: 数値と生データ・処理の対応
+- `WORKLOG.md`: 時系列の作業・判断・相談・検証
+
+通常、教員へ提出するのは `report.pdf` と授業指定物だけである。補助文書を一緒に提出するかは授業指示へ従う。
+
+## 14. 診断とトラブル対応
 
 ```powershell
-python scripts/render_pdf.py `
-  experiments/sorting-2026/build/final-candidate.pdf `
-  experiments/sorting-2026/quality/rendered `
-  --dpi 180 `
-  --manifest experiments/sorting-2026/quality/RENDER_MANIFEST.yaml
+python scripts/doctor.py
 ```
 
-全ページで次を確認する。
+この診断はPython依存、TeX、回帰テスト、完成例の再現性、承認状態、最終検査を確認する。
 
-- 文字欠け、豆腐、重なり、はみ出しがない。
-- 表紙の題目と項目ブロックが意図どおり中央にある。
-- 本文が1ページから始まる。
-- 見出しだけがページ末に孤立していない。
-- 図表が本文の初回参照より前に出ていない。
-- 図は下、表とリストは上にキャプションがある。
-- 軸、凡例、単位、表見出しが読める。
-- URLが余白を越えず、参考文献が判読できる。
-- 不自然な大空白や段落分断がない。
+G1が通らない場合:
+実習書の読了、採点基準の本人確認、表紙、AI規則、必須質問を確認する。
 
-修正したらPDFを再生成し、変更ページだけでなく全ページを再確認する。結果を `quality/FINAL_CHECK.yaml` と `WORKLOG.md` に記録する。
+G2が通らない場合:
+生データ封印、分析再現、出典検証、`WRITING_PLAN.yaml`、`build/skeleton.pdf` を確認する。
 
-## 25. 必須成果物
+候補PDFが作れない場合:
+全文章枠の `status: typeset`、原文ハッシュ、組版ファイル、意味変更状態、G2の有効性を確認する。
 
-`deliverables/` には最低限次の5点を揃える。
+G3が通らない場合:
+全ページ目視、`QUALITY_REVIEW.yaml`、`PROFESSOR_REVIEW.yaml`、必須基準の `met`、教授評価の `ready` を確認する。
 
-- `report.pdf`: 提出用レポート。
-- `HANDOFF.md`: 作業内容、意識した点、結果、本文への反映、未解決事項、再生成方法、提出物一覧。
-- `SOURCE_AUDIT.md`: 本文主張と出典の対応、確認位置、内容一致、採否理由。
-- `RESULT_TRACEABILITY.md`: 数値、図表、結論とデータ・処理の対応。
-- `WORKLOG.md`: 日時、担当、Phase、入力、実行、判断根拠、変更、異常、相談、検証。
-
-`RUBRIC_TRACEABILITY.md` と `ORAL_DEFENSE.md` は授業指定またはユーザー希望がある場合だけ追加する。`QUALITY_REVIEW.yaml` は内部監査資料であり、通常は提出物へ複製しない。
-
-必要に応じて分析コード、処理済みデータ、環境情報、検査ログも含める。ただし認証情報や不要な個人情報は入れない。
-
-## 26. CodexとAntigravityの分担
-
-Codexが担当する:
-
-- 実習書読解と質問
-- 実験計画、実行、分析
-- 出典検証
-- 数値、式、図表、コード
-- TeXとPDF
-- 技術監査と提出可能性の判定
-
-ユーザーが希望した場合だけAntigravityが担当できる:
-
-- 誤字脱字
-- 助詞と主語述語
-- 「である」調
-- 冗長表現
-- 曖昧な指示語
-- 語順と段落接続
-- 用語表記の統一
-
-Antigravityは内容を追加せず、疑問は修正ではなくCodexへの指摘とする。利用時は `ANTIGRAVITY.md` を読み、保護スナップショットを作ってから始める。Codexは返却差分を確認し、数値、単位、式、引用、断定の強さが変わっていないことを再監査する。
-
-ユーザーが担当する:
-
-- 実際に行った作業、実験条件、失敗、除外、再実験の事実確認。
-- 氏名、学生番号、科目、日付、提出先などの個人・授業情報。
-- Codexが要約した結果と論証方針が本人の理解と一致するかの判断。
-- 最終候補PDFの見た目と、自分の言葉で説明できるかの確認。
-- G1、G2、G3の承認と、最終提出の意思決定。
-
-## 27. 実習書と共通規則が衝突した場合
-
-実習書を優先する。次の手順を取る。
-
-1. 衝突箇所を特定する。
-2. 実習書の該当ページまたは節を記録する。
-3. 必要ならユーザーへ確認する。
-4. 採用した判断を `USER_DECISIONS.yaml` に保存する。
-5. 共通規則から外れた理由と影響を `WORKLOG.md` に残す。
-6. 自動検査と衝突する場合は、検査を黙って削除せず、例外を明示的に実装・記録する。
-
-## 28. 自動検査だけでは判定できない事項
-
-PythonスクリプトはAIではなく決定的な検査器である。存在、構造、ハッシュ、ID対応、一部の参照順、A4寸法、再生成一致は確認できるが、文章や実験の意味は理解しない。次はCodexまたはユーザーの意味上の確認が必要である。
-
-- 実習書を本当に全ページ読んだか。
-- 出典の本文が主張を正しく支えているか。
-- 結果と考察が混ざっていないか。
-- グラフが誤解を招かないか。
-- 有効数字と不確かさが適切か。
-- 考察の因果関係がデータ以上に強くないか。
-- PDFの視覚的な重心、読みやすさ、余白が適切か。
-- 実験を本人が本当に行ったか、本文を本人が説明できるか。
-
-このため、`validate_experiment.py` の成功だけで完成とはしない。PHASE 8の目視記録が必要である。
-
-## 29. よくある問題
-
-### 表紙を直したのにPDFが変わらない
-
-`report/meta.tex` ではなく `spec/REPORT_META.yaml` を直し、`build_report.py` を再実行する。
-
-### 図表が意図した位置に来ない
-
-本文の参照位置を先に確認する。段落中へ固定せず `[tbp]` を使い、次ページ上端を許容する。大きすぎる場合は縮小、分割、単独ページ、付録を検討する。
-
-### PHASE 1が通らない
-
-`instructions_read_complete`、読了日時、必須質問の状態と回答、表紙の未確定値を確認する。
-
-### PHASE 6が通らない
-
-プレースホルダ、`\maketitle`、abstract、2段組、`[H]`、キャプションやラベルの欠落、本文先行参照を確認する。
-
-### PHASE 8が通らない
-
-G3前なら `build/final-candidate.pdf`、G3後なら `deliverables/` の必須5ファイルを確認する。内部の `FINAL_CHECK.yaml` の2つの `passed`、`QUALITY_REVIEW.yaml` の全項目、PDFのA4寸法も必要である。G3承認対象を修正した場合、古い承認は自動失効するため確認票からやり直す。
-
-### TeXの警告が出る
-
-未解決参照、Overfull/Underfull、重複リンク先、フォント欠落を優先して解消する。環境依存の情報警告は内容と出力を確認し、問題がない根拠を最終記録へ残す。
-
-## 30. 標準の完了手順
+## 15. 最小の実行例
 
 ```powershell
-# 1. 新規実験
-python scripts/new_experiment.py sorting-2026 --title "実験題目"
-
-# 2. 実習書全読、質問、回答、計画、context index更新後にG1確認票を作る
-python scripts/workflow.py refresh-context experiments/sorting-2026
+python scripts/doctor.py
+python scripts/new_experiment.py sorting-2026 --title "ソートアルゴリズムの性能評価"
+# Codexが資料を全読し、G1資料を作成
 python scripts/workflow.py prepare-review experiments/sorting-2026 --gate G1
-
-# 3. ユーザーが「承認 G1」と答えた後だけ記録する
+# 本人回答後
 python scripts/workflow.py approve experiments/sorting-2026 --gate G1 --decision "承認 G1"
-
-# 4. 実験後に生データを封印し、分析結果を封印・再生成する
-python scripts/workflow.py seal-data experiments/sorting-2026
-python scripts/reproduce.py seal experiments/sorting-2026
-python scripts/reproduce.py verify experiments/sorting-2026
-
-# 5. 出典検証後にG2確認票を作り、本人回答後だけ承認記録を作る
+# 実験・分析・出典・骨格
+python scripts/build_report.py experiments/sorting-2026 --mode skeleton
 python scripts/workflow.py prepare-review experiments/sorting-2026 --gate G2
-python scripts/workflow.py approve experiments/sorting-2026 --gate G2 --decision "承認 G2"
-
-# 6. 執筆、Codex再監査、必要ならAntigravity推敲後に候補PDFを生成する
+# 本人回答後、本人文章を受領・保存・組版
 python scripts/build_report.py experiments/sorting-2026 --mode candidate
-python scripts/render_pdf.py experiments/sorting-2026/build/final-candidate.pdf experiments/sorting-2026/quality/rendered --dpi 180 --manifest experiments/sorting-2026/quality/RENDER_MANIFEST.yaml
-
-# 7. FINAL_CHECK等を更新し、G3確認票を作る
+python scripts/render_pdf.py experiments/sorting-2026/build/final-candidate.pdf experiments/sorting-2026/quality/rendered --manifest experiments/sorting-2026/quality/RENDER_MANIFEST.yaml
+# 品質監査と教授視点評価後
 python scripts/workflow.py prepare-review experiments/sorting-2026 --gate G3
-
-# 8. ユーザーが「承認 G3」と答えた後だけ提出版へ固定する
+# 本人回答後
 python scripts/workflow.py approve experiments/sorting-2026 --gate G3 --decision "承認 G3"
 python scripts/workflow.py release experiments/sorting-2026
 ```
 
-最終的に、ユーザーが `HANDOFF.md` から作業全体を理解でき、`SOURCE_AUDIT.md` から引用根拠を確認でき、`RESULT_TRACEABILITY.md` から数値を生データへたどれ、内部の `QUALITY_REVIEW.yaml` から評価基準への対応を確認でき、`WORKLOG.md` から判断経緯を復元でき、G3承認が最新候補のハッシュへ結び付いた状態を完成とする。
-
-## 31. 3つの確認票と承認失効
-
-`prepare-review` は内部検査を通した後、チャットへ貼るための短い確認票を作る。G1は要求・表紙・AI利用・計画、G2は生データ・逸脱・主要結果・主張と出典、G3は最終候補・個人情報・見た目・説明可能性を扱う。詳しいファイル一覧は `STATE.yaml` に保存し、会話では原則として要約5項目、リスク3件以内だけを示す。
-
-承認はゲート対象ファイル群のSHA-256集合ダイジェストと一緒に保存される。承認後に対象ファイルが変わると `approval_current` が不一致を検出し、その先のPhase、ビルド、releaseを停止する。ユーザーの承認文はそのまま `decision_text` に保存し、Codexは代筆・要約・推測してはならない。完成例の移行にだけ `framework_migration` を使用でき、`examples/` 外では無効である。
-
-## 32. トークンを節約する仕組み
-
-- `CONTEXT_INDEX.yaml` に入力資料のハッシュ、短い検証済み要約、再読条件を保存する。ハッシュが同じ資料は、引用確認、疑義、最終重要確認がない限り全文を読み直さない。
-- Pythonにできる存在確認、構造検査、ハッシュ、集計、再生成、PDF寸法はPythonへ任せ、AIは意味判断へ集中する。
-- ユーザーには正常な技術ログを送らず、判断に必要な差分だけを確認票へまとめる。
-- ユーザーが確認できる本人事実と見た目はユーザーへ明示的に依頼する。Codexは本人確認を推測しない。
-- 途中相談は結果や採点が変わる重要事項だけに絞り、それ以外は次のゲートでまとめる。
-
-## 33. 自律的な改善
-
-実験固有の改善候補は `WORKLOG.md`、共通システムの候補はリポジトリ側で管理する。誤字、説明、検査追加など出力意味や様式を変えないL1変更は、回帰テストと `SYSTEM_CHANGELOG.md` の記録を伴う場合だけ自動適用できる。スキーマ、標準様式、役割、承認回数、出力意味を変えるL2変更は、影響、移行方法、戻し方を提示し、ユーザー承認後に実装する。進行中の承認済みレポートへ黙って適用しない。
-
-## 34. 状態確認
-
-```powershell
-python scripts/workflow.py status experiments/sorting-2026
-python scripts/workflow.py verify experiments/sorting-2026
-```
-
-`status` は現在位置と各ゲートの状態、`verify` は承認済みゲートのハッシュが現在も一致するかを示す。これらはAIを呼ばず、ローカルファイルだけを読む。
+通常、これらのコマンドはCodexが実行し、ユーザーはG1〜G3と本文執筆に集中する。

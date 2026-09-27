@@ -4,6 +4,20 @@
 
 \input{meta.tex}
 
+\IfFileExists{../build/report-mode.tex}{\input{../build/report-mode.tex}}{\def\reportskeleton{0}}
+\newcommand{\slotplaceholder}[1]{%
+  \par\medskip\noindent
+  \fbox{\parbox{0.94\linewidth}{\centering\textbf{（#1）}}}%
+  \par\medskip
+}
+\newcommand{\proseslot}[2]{%
+  \ifnum\reportskeleton=1
+    \slotplaceholder{#2}%
+  \else
+    \IfFileExists{../prose/typeset/#1.tex}{\input{../prose/typeset/#1.tex}}{\slotplaceholder{#2}}%
+  \fi
+}
+
 \begin{document}
 \makelabcover
 

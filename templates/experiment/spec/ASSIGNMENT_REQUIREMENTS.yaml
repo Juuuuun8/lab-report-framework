@@ -17,6 +17,10 @@ requirements:
     source_locator: "TODO: 実習書のページ・節"
     mandatory: true
     verification_method: "TODO"
+rubric_source:
+  status: not_provided_internal
+  confirmed_by_user: false
+  note: "TODO: 教員の採点基準がある場合は provided。ない場合は内部基準であることを本人確認する。"
 rubric_criteria:
   - rubric_id: RUB-001
     criterion: "TODO"

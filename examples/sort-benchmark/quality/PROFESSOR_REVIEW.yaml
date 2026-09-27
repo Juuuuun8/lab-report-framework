@@ -1,0 +1,27 @@
+evaluator_role: codex_simulated_professor
+reviewed_at: "2026-09-27T12:00:00+09:00"
+rubric:
+  - rubric_id: RUB-001
+    score: 5
+    verdict: met
+    evidence: ["目的・結果・考察・結論が同じ比較問いへ対応", "結果と解釈を節で分離", "P-001、P-005〜P-009"]
+    criticism: "架空例のため、実験固有の深い物理的・計算機科学的解釈までは評価できない。"
+    improvement: "実レポートでは、理論値との差を不確かさとともに定量化する。"
+  - rubric_id: RUB-002
+    score: 5
+    verdict: met
+    evidence: ["R-001〜R-004", "S-001〜S-003", "C-001〜C-007", "原文ハッシュ9件"]
+    criticism: "クイックソートの入力分布とピボット選択が架空条件では固定されていない。"
+    improvement: "実験時は乱数種、入力分布、実装版を実行記録へ固定する。"
+  - rubric_id: RUB-003
+    score: 4
+    verdict: met
+    evidence: ["A4・1段組・本文10.5pt", "図下・表上・リスト上キャプション", "全ページ画像確認"]
+    criticism: "完成例は3ページと短く、長い表・複数図・付録での安定性は別途確認が必要である。"
+    improvement: "実案件の最終目視で改ページ、フロート順、長いURLを重点確認する。"
+overall:
+  score_percent: 93
+  verdict: ready
+  strengths: ["主張をデータと出典へ追跡できる", "断定範囲が証拠に合う", "本人原文と組版後本文を分離保全する"]
+  weaknesses: ["架空データなので実験遂行能力は評価対象外", "実在授業の採点基準ではなく内部品質基準による評価"]
+limitations: "これは実際の担当教員ではなく、完成例用に本人確認された内部基準に基づくCodexの模擬評価である。得点や成績を保証しない。"

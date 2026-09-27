@@ -1,0 +1,15 @@
+evaluator_role: codex_simulated_professor
+reviewed_at: "TODO"
+rubric:
+  - rubric_id: RUB-001
+    score: 1
+    verdict: not_met
+    evidence: ["TODO"]
+    criticism: "TODO"
+    improvement: "TODO"
+overall:
+  score_percent: 0
+  verdict: revise
+  strengths: ["TODO"]
+  weaknesses: ["TODO"]
+limitations: "これは実際の担当教員ではなく、明示された採点基準に基づくCodexの模擬評価である。"

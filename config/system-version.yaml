@@ -1,6 +1,6 @@
-version: "5.0.0"
-workflow: "three-gate-human-approved"
-released_at: "2026-09-26"
+version: "6.0.0"
+workflow: "three-gate-user-authored-prose"
+released_at: "2026-09-27"
 compatibility:
-  experiment_schema: 3
+  experiment_schema: 4
   style_contract_revision: 2

@@ -5,6 +5,13 @@ ai_use:
   allowed_uses: []
   prohibited_uses: []
   user_confirmed: false
+writing_authorship:
+  body_prose_owner: user
+  ai_may_generate_body: false
+  allowed_processing:
+    - "誤字脱字・句読点・表記統一"
+    - "TeXエスケープ・数式・単位・参照・引用の組版"
+  meaning_change_requires_user_approval: true
 disclosure:
   required: null
   text: null

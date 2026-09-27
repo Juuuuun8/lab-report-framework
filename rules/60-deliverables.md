@@ -8,7 +8,11 @@
 
 ## HANDOFF.md
 
-ユーザーが最初に読む引き継ぎ文書。何を行ったか、何を重視したか、実験結果の要約、レポートへどう記述したか、未解決事項、再生成方法、提出ファイル一覧を記す。
+ユーザーが最初に読む引き継ぎ文書。何を行ったか、本人原文の保全と意味変更の有無、実験結果、レポートへの反映、未解決事項、再生成方法、提出ファイル一覧を記す。
+
+## PROFESSOR_EVALUATION.md
+
+G1で確定した採点基準に沿う教授視点の模擬評価。基準別の点数、根拠、厳しい指摘、改善案、総合評価、評価の限界を記す。本人確認用であり、授業から指定されない限り教員へ提出しない。
 
 ## SOURCE_AUDIT.md
 
@@ -33,7 +37,7 @@
 ## 内部監査資料
 
 
-`quality/QUALITY_REVIEW.yaml`、`quality/FINAL_CHECK.yaml`、`workflow/`、`spec/` はCodexと検査器が使う内部資料であり、通常の提出物へ複製しない。
+`quality/QUALITY_REVIEW.yaml`、`quality/PROFESSOR_REVIEW.yaml`、`quality/FINAL_CHECK.yaml`、`workflow/`、`spec/` はCodexと検査器が使う内部資料であり、通常の提出物へ複製しない。
 
 ## 補助成果物
 

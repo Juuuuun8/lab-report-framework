@@ -17,7 +17,6 @@ from workflow import packet_g1  # noqa: E402
 ROOT = Path(__file__).resolve().parents[1]
 SAMPLE = ROOT / "examples" / "sort-benchmark"
 VALIDATOR = ROOT / "scripts" / "validate_experiment.py"
-POLISH_GUARD = ROOT / "scripts" / "polish_guard.py"
 REPRODUCE = ROOT / "scripts" / "reproduce.py"
 WORKFLOW = ROOT / "scripts" / "workflow.py"
 
@@ -33,6 +32,15 @@ def run(*args: object) -> subprocess.CompletedProcess[str]:
 
 
 class QualityGateTests(unittest.TestCase):
+    def refresh_gate(self, experiment: Path, gate: str) -> None:
+        state_path = experiment / "workflow" / "STATE.yaml"
+        state = yaml.safe_load(state_path.read_text(encoding="utf-8"))
+        digest, manifest = gate_digest(experiment, gate)
+        state["gates"][gate]["artifact_digest"] = digest
+        state["gates"][gate]["artifact_count"] = len(manifest)
+        state["gates"][gate]["artifacts"] = manifest
+        state_path.write_text(yaml.safe_dump(state, allow_unicode=True, sort_keys=False), encoding="utf-8")
+
     def clone_sample(self, parent: Path) -> Path:
         target = parent / "experiment"
         shutil.copytree(SAMPLE, target, ignore=shutil.ignore_patterns("build", "deliverables", "POLISH_BASELINE.json"))
@@ -46,6 +54,12 @@ class QualityGateTests(unittest.TestCase):
                 gate["decided_by"] = "user"
                 gate["decision_text"] = "承認 test fixture"
         state_path.write_text(yaml.safe_dump(state, allow_unicode=True, sort_keys=False), encoding="utf-8")
+        writing_path = target / "spec" / "WRITING_PLAN.yaml"
+        writing = yaml.safe_load(writing_path.read_text(encoding="utf-8"))
+        for slot in writing["slots"]:
+            slot["authorship"] = "user"
+        writing_path.write_text(yaml.safe_dump(writing, allow_unicode=True, sort_keys=False), encoding="utf-8")
+        self.refresh_gate(target, "G2")
         return target
 
     def test_completed_sample_passes_phase_7(self) -> None:
@@ -92,16 +106,57 @@ class QualityGateTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("style command requires approved", result.stdout)
 
-    def test_polish_guard_detects_numeric_change(self) -> None:
+    def test_final_validation_rejects_missing_user_prose(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             experiment = self.clone_sample(Path(raw))
-            snapshot = run(POLISH_GUARD, "snapshot", experiment)
-            self.assertEqual(snapshot.returncode, 0, snapshot.stdout + snapshot.stderr)
-            section = experiment / "report" / "sections" / "03-results.tex"
-            section.write_text(section.read_text(encoding="utf-8").replace("194.74", "195.74", 1), encoding="utf-8")
-            verify = run(POLISH_GUARD, "verify", experiment)
-            self.assertNotEqual(verify.returncode, 0)
-            self.assertIn("protected technical content changed", verify.stderr)
+            (experiment / "prose" / "typeset" / "P-005.tex").unlink()
+            result = run(VALIDATOR, experiment, "--phase", "6")
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("typeset prose is missing for P-005", result.stdout)
+
+    def test_nonexample_cannot_claim_example_fixture_authorship(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            experiment = self.clone_sample(Path(raw))
+            path = experiment / "spec" / "WRITING_PLAN.yaml"
+            data = yaml.safe_load(path.read_text(encoding="utf-8"))
+            data["slots"][0]["authorship"] = "example_fixture"
+            path.write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False), encoding="utf-8")
+            self.refresh_gate(experiment, "G2")
+            result = run(VALIDATOR, experiment, "--phase", "6")
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("authorship must be user", result.stdout)
+
+    def test_prose_files_do_not_invalidate_g2_structure_approval(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            experiment = self.clone_sample(Path(raw))
+            before, _ = gate_digest(experiment, "G2")
+            prose = experiment / "prose" / "original" / "P-001.md"
+            prose.write_text(prose.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+            plan_path = experiment / "spec" / "WRITING_PLAN.yaml"
+            plan = yaml.safe_load(plan_path.read_text(encoding="utf-8"))
+            plan["status"] = "prose_complete"
+            plan["slots"][0]["original_sha256"] = "0" * 64
+            plan["slots"][0]["status"] = "typeset"
+            plan["slots"][0]["proofread_notes"] = "受領済み"
+            plan_path.write_text(yaml.safe_dump(plan, allow_unicode=True, sort_keys=False), encoding="utf-8")
+            after, _ = gate_digest(experiment, "G2")
+            self.assertEqual(before, after)
+
+    def test_skeleton_validation_uses_planned_references_before_user_prose(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            experiment = self.clone_sample(Path(raw))
+            shutil.rmtree(experiment / "prose" / "typeset")
+            (experiment / "prose" / "typeset").mkdir()
+            plan_path = experiment / "spec" / "WRITING_PLAN.yaml"
+            plan = yaml.safe_load(plan_path.read_text(encoding="utf-8"))
+            plan["status"] = "skeleton_ready"
+            for slot in plan["slots"]:
+                slot["status"] = "awaiting_user"
+                slot["original_sha256"] = None
+                slot["proofread_notes"] = None
+            plan_path.write_text(yaml.safe_dump(plan, allow_unicode=True, sort_keys=False), encoding="utf-8")
+            result = run(VALIDATOR, experiment, "--phase", "5")
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_g1_approval_becomes_stale_after_reviewed_input_changes(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
@@ -174,23 +229,28 @@ class QualityGateTests(unittest.TestCase):
             for legacy in ("QUALITY_REVIEW.yaml", "RUBRIC_TRACEABILITY.md", "ORAL_DEFENSE.md"):
                 (deliverables / legacy).write_text("legacy\n", encoding="utf-8")
 
+            self.refresh_gate(experiment, "G3")
+
             result = run(WORKFLOW, "release", experiment)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertEqual(
                 {path.name for path in deliverables.iterdir() if path.is_file()},
-                {"report.pdf", "HANDOFF.md", "SOURCE_AUDIT.md", "RESULT_TRACEABILITY.md", "WORKLOG.md"},
+                {"report.pdf", "HANDOFF.md", "PROFESSOR_EVALUATION.md", "SOURCE_AUDIT.md", "RESULT_TRACEABILITY.md", "WORKLOG.md"},
             )
+
+    def test_professor_review_is_required_for_final_candidate(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            experiment = self.clone_sample(Path(raw))
+            (experiment / "quality" / "PROFESSOR_REVIEW.yaml").unlink()
+            result = run(VALIDATOR, experiment, "--phase", "8", "--candidate")
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("missing professor review", result.stdout)
 
     def test_released_clone_verifies_without_ignored_build_directory(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
-            experiment = Path(raw) / "experiment"
-            shutil.copytree(SAMPLE, experiment, ignore=shutil.ignore_patterns("build", "POLISH_BASELINE.json"))
-            state_path = experiment / "workflow" / "STATE.yaml"
-            state = yaml.safe_load(state_path.read_text(encoding="utf-8"))
-            state["example_only"] = False
-            for gate in state["gates"].values():
-                gate["decided_by"] = "user"
-            state_path.write_text(yaml.safe_dump(state, allow_unicode=True, sort_keys=False), encoding="utf-8")
+            experiment = self.clone_sample(Path(raw))
+            shutil.copytree(SAMPLE / "deliverables", experiment / "deliverables")
+            self.refresh_gate(experiment, "G3")
             result = run(VALIDATOR, experiment, "--phase", "8")
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 

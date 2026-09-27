@@ -12,8 +12,8 @@ import yaml
 GATES = ("G1", "G2", "G3")
 GATE_TITLES = {
     "G1": "実験前確認",
-    "G2": "証拠・解釈確認",
-    "G3": "提出",
+    "G2": "証拠・骨格確認",
+    "G3": "完成稿・提出確認",
 }
 
 GATE_PATHS = {
@@ -37,15 +37,21 @@ GATE_PATHS = {
         "analysis",
         "RESULT_TRACEABILITY.md",
         "SOURCE_AUDIT.md",
+        "spec/WRITING_PLAN.yaml",
+        "report",
     ),
     "G3": (
         "report",
+        "prose",
+        "spec/WRITING_PLAN.yaml",
         "HANDOFF.md",
+        "PROFESSOR_EVALUATION.md",
         "RUBRIC_TRACEABILITY.md",
         "ORAL_DEFENSE.md",
         "WORKLOG.md",
         "quality/FINAL_CHECK.yaml",
         "quality/QUALITY_REVIEW.yaml",
+        "quality/PROFESSOR_REVIEW.yaml",
         "quality/RENDER_MANIFEST.yaml",
         "build/final-candidate.pdf",
     ),
@@ -96,6 +102,40 @@ def content_fingerprint(path: Path) -> tuple[str, int]:
     return hashlib.sha256(payload).hexdigest(), len(payload)
 
 
+def gate_fingerprint(experiment: Path, gate: str, path: Path) -> tuple[str, int]:
+    """Hash only the G2-approved structural part of the writing plan.
+
+    Prose receipt status, original hashes, and proofreading notes are expected to
+    change after G2. G3 hashes the complete file through content_fingerprint.
+    """
+    if gate == "G2" and path == experiment / "spec" / "WRITING_PLAN.yaml":
+        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        stable = {
+            "version": data.get("version"),
+            "skeleton_pdf": data.get("skeleton_pdf"),
+            "slots": [
+                {
+                    key: slot.get(key)
+                    for key in (
+                        "slot_id",
+                        "display_label",
+                        "section",
+                        "purpose",
+                        "required_points",
+                        "planned_references",
+                        "evidence_ids",
+                        "rubric_ids",
+                        "authorship",
+                    )
+                }
+                for slot in data.get("slots", [])
+            ],
+        }
+        payload = yaml.safe_dump(stable, allow_unicode=True, sort_keys=True).encode("utf-8")
+        return hashlib.sha256(payload).hexdigest(), len(payload)
+    return content_fingerprint(path)
+
+
 def gate_files(experiment: Path, gate: str) -> list[Path]:
     files: list[Path] = []
     for relative in GATE_PATHS[gate]:
@@ -117,7 +157,7 @@ def gate_files(experiment: Path, gate: str) -> list[Path]:
 def gate_manifest(experiment: Path, gate: str) -> list[dict[str, object]]:
     manifest = []
     for path in gate_files(experiment, gate):
-        digest, size = content_fingerprint(path)
+        digest, size = gate_fingerprint(experiment, gate, path)
         manifest.append({
             "path": path.relative_to(experiment).as_posix(),
             "sha256": digest,

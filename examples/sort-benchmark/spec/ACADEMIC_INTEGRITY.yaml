@@ -7,6 +7,13 @@ ai_use:
   prohibited_uses:
     - "架空データを実測値として提出すること"
   user_confirmed: true
+writing_authorship:
+  body_prose_owner: user
+  ai_may_generate_body: false
+  allowed_processing:
+    - "完成例では架空原文を本人原文相当の固定フィクスチャとして保存する。"
+    - "誤字脱字、TeX、数式、単位、参照、引用の組版のみを許可する。"
+  meaning_change_requires_user_approval: true
 disclosure:
   required: true
   text: "数値はレイアウト確認用に作成した架空データである。"
