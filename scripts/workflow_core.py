@@ -45,6 +45,7 @@ GATE_PATHS = {
         "quality/SKELETON_BUILD.yaml",
     ),
     "G3": (
+        "spec/LAYOUT_TUNING.yaml",
         "report",
         "prose",
         "spec/WRITING_PLAN.yaml",
@@ -59,6 +60,7 @@ GATE_PATHS = {
         "quality/RENDER_MANIFEST.yaml",
         "quality/CANDIDATE_BUILD.yaml",
         "quality/PROSE_DIFF.md",
+        "quality/PROSE_CHANGES.md",
         "SOURCE_AUDIT.md",
         "RESULT_TRACEABILITY.md",
         "spec/ACADEMIC_INTEGRITY.yaml",
@@ -145,7 +147,7 @@ def gate_fingerprint(experiment: Path, gate: str, path: Path) -> tuple[str, int]
                         "rubric_ids",
                         "authorship",
                     )
-                }
+                } | ({"student_judgment": slot["student_judgment"]} if "student_judgment" in slot else {})
                 for slot in data.get("slots", [])
             ],
         }

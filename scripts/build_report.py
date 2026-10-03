@@ -14,6 +14,7 @@ from pathlib import Path
 import yaml
 
 from artifact_checks import record_build, recorder_dependencies
+from layout_tuning import tex as layout_tex
 
 
 TEX_ESCAPES = {
@@ -77,7 +78,7 @@ def main() -> int:
     build_dir = experiment / "build"
     build_dir.mkdir(exist_ok=True)
     (build_dir / "report-mode.tex").write_text(
-        f"\\def\\reportskeleton{{{1 if args.mode == 'skeleton' else 0}}}\n",
+        f"\\def\\reportskeleton{{{1 if args.mode == 'skeleton' else 0}}}\n" + layout_tex(experiment, args.mode),
         encoding="utf-8",
         newline="\n",
     )

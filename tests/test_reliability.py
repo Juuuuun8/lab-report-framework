@@ -18,6 +18,8 @@ from workflow_core import approval_current
 from workflow import release, build_review, packet_g1
 from workflow import initial_state
 from workflow_core import write_state
+from receive_prose import receive
+from report_views import generate, sync_rubric
 
 
 class ReliabilityTests(unittest.TestCase):
@@ -281,6 +283,9 @@ class ReliabilityTests(unittest.TestCase):
                 shutil.copy2(SAMPLE / "spec" / f"{name}.yaml", exp / "spec" / f"{name}.yaml")
             for name in ("RESULT_TRACEABILITY.md", "SOURCE_AUDIT.md", "WORKLOG.md"):
                 shutil.copy2(SAMPLE / name, exp / name)
+            generate(exp, "sources", replace_legacy=True)
+            figure = exp / "report/sections/03-results.tex"
+            figure.write_text(figure.read_text(encoding="utf-8").replace(r"width=0.82\textwidth", r"width=\ReportFigureWidth"), encoding="utf-8")
             plan_path = exp / "spec/WRITING_PLAN.yaml"
             plan = yaml.safe_load(plan_path.read_text(encoding="utf-8"))
             plan["status"] = "skeleton_ready"
@@ -294,11 +299,16 @@ class ReliabilityTests(unittest.TestCase):
             command(build, exp, "--mode", "skeleton")
             command(workflow, "prepare-review", exp, "--gate", "G2")
             command(workflow, "approve", exp, "--gate", "G2", "--decision", "承認 G2: test skeleton")
+            (exp / "spec/LAYOUT_TUNING.yaml").write_text("figure_width: 0.85\ntextfloatsep_pt: 14\n", encoding="utf-8")
+            self.assertTrue(approval_current(exp, "G2")[0])
             # One paragraph is received first, while all other slots stay empty.
-            for folder in ("original", "typeset"):
-                (exp / "prose" / folder).mkdir(parents=True, exist_ok=True)
-                source = SAMPLE / "prose" / folder / ("P-001.md" if folder == "original" else "P-001.tex")
-                shutil.copy2(source, exp / "prose" / folder / source.name)
+            receipt = exp / "batch.yaml"
+            receipt.write_text(yaml.safe_dump({"receipt": "test fictional paragraph receipt", "paragraphs": [
+                {"slot_id": "P-001", "text": (SAMPLE / "prose/original/P-001.md").read_text(encoding="utf-8")}
+            ]}, allow_unicode=True), encoding="utf-8")
+            command(ROOT / "scripts/receive_prose.py", exp, receipt)
+            (exp / "prose/typeset").mkdir(parents=True, exist_ok=True)
+            shutil.copy2(SAMPLE / "prose/typeset/P-001.tex", exp / "prose/typeset/P-001.tex")
             record_review(exp, "P-001", "test fixture reviewed")
             command(build, exp, "--mode", "draft")
             from pypdf import PdfReader
@@ -306,9 +316,9 @@ class ReliabilityTests(unittest.TestCase):
             self.assertIn("文章2", draft_text.replace(" ", ""))
             self.assertNotIn("文章1）", draft_text.replace(" ", ""))
             self.assertIn("本例の目的", draft_text.replace(" ", ""))
+            receive(exp, [{"slot_id": s["slot_id"], "text": (SAMPLE / s["original_file"]).read_text(encoding="utf-8")} for s in plan["slots"][1:]], "test remaining fictional paragraphs")
             for slot in plan["slots"][1:]:
-                for folder, key in (("original", "original_file"), ("typeset", "typeset_file")):
-                    shutil.copy2(SAMPLE / slot[key], exp / slot[key])
+                shutil.copy2(SAMPLE / slot["typeset_file"], exp / slot["typeset_file"])
                 record_review(exp, slot["slot_id"], "test fixture reviewed")
             for name in ("HANDOFF.md", "PROFESSOR_EVALUATION.md"):
                 shutil.copy2(SAMPLE / name, exp / name)
@@ -317,6 +327,8 @@ class ReliabilityTests(unittest.TestCase):
             command(build, exp, "--mode", "candidate")
             for name in ("FINAL_CHECK", "QUALITY_REVIEW", "PROFESSOR_REVIEW"):
                 shutil.copy2(SAMPLE / "quality" / f"{name}.yaml", exp / "quality" / f"{name}.yaml")
+            generate(exp, "evaluation", replace_legacy=True)
+            sync_rubric(exp)
             command(ROOT / "scripts/render_pdf.py", exp / "build/final-candidate.pdf", exp / "quality/rendered", "--manifest", exp / "quality/RENDER_MANIFEST.yaml")
             command(workflow, "bind-reviews", exp)
             command(workflow, "prepare-review", exp, "--gate", "G3")

@@ -5,6 +5,8 @@
 % 本文はユーザー原文から作成したファイルだけを読み込む。
 % 未提出時は骨格PDFに（文章N）を表示する。
 \IfFileExists{../build/report-mode.tex}{\input{../build/report-mode.tex}}{\def\reportskeleton{0}}
+% 図の任意の幅調整には width=\ReportFigureWidth をG2前から使う。
+% scripts/build_report.py が既定値と候補用の限定設定を供給する。
 \newcommand{\slotplaceholder}[1]{%
   \par\medskip\noindent
   \fbox{\parbox{0.94\linewidth}{\centering\textbf{（#1）}}}%

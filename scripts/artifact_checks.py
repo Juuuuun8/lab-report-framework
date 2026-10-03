@@ -20,7 +20,7 @@ def build_inputs(experiment: Path, mode: str, dependencies: list[str] | None = N
         "spec/STYLE_OVERRIDES.yaml", "spec/WRITING_PLAN.yaml",
     )), ("framework", root, ("tex", "config/style-contract.yaml"))]
     if mode != "skeleton":
-        scopes[0] = ("experiment", experiment, (*scopes[0][2], "prose"))
+        scopes[0] = ("experiment", experiment, (*scopes[0][2], "prose", "spec/LAYOUT_TUNING.yaml"))
     result = []
     for scope, base, relatives in scopes:
         files = set()

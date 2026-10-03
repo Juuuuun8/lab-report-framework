@@ -6,6 +6,7 @@
   "required": ["reviewer", "reviewed_at", "reviewed_pdf_sha256", "reviewed_inputs_digest", "rubric", "content_checks"],
   "properties": {
     "reviewer": {"type": "string", "minLength": 1},
+    "rubric_source": {"const": "professor_review"},
     "reviewed_at": {"type": "string", "minLength": 10},
     "reviewed_pdf_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
     "reviewed_inputs_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},

@@ -1,4 +1,4 @@
-version: "7.0.0"
+version: "7.1.0"
 workflow: "three-gate-user-authored-prose"
 released_at: "2026-10-03"
 compatibility:

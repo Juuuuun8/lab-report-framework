@@ -69,6 +69,22 @@ def write_diff(experiment: Path, plan: dict) -> Path:
     path = experiment / "quality/PROSE_DIFF.md"
     path.parent.mkdir(exist_ok=True)
     path.write_text("\n".join(lines), encoding="utf-8", newline="\n")
+    summary = ["# 本文の変更案内", "", "組版記号を除く説明はCodexの確認メモです。意味保存の自動判定ではありません。詳細差分: PROSE_DIFF.md", ""]
+    for slot in plan["slots"]:
+        original, typeset = paths(experiment, slot)
+        if not original.is_file():
+            continue
+        if not typeset.is_file():
+            summary.extend([f"## {slot['display_label']} ({slot['slot_id']})", "", "状態: 受領済み・校正待ち。以前の組版確認は引き継がない。", ""])
+            continue
+        errors = review_errors(experiment, slot)
+        if original.read_text(encoding="utf-8") == typeset.read_text(encoding="utf-8") and not errors:
+            continue
+        summary.extend([f"## {slot['display_label']} ({slot['slot_id']})", "",
+                        "状態: " + ("要再確認（変更後のレビュー未完了）" if errors else "現在の版を確認済み"),
+                        ("旧版のメモ（現在の版には無効）: " if errors else "変更内容: ") + (slot.get("proofread_notes") or "未確認。原文と組版後を照合する。"),
+                        "意味変更: " + slot.get("semantic_change", "none"), ""])
+    (experiment / "quality/PROSE_CHANGES.md").write_text("\n".join(summary), encoding="utf-8", newline="\n")
     return path
 
 

@@ -25,7 +25,7 @@ from workflow_core import (
     state_path,
     write_state,
 )
-from review_prose import write_diff
+from review_prose import write_diff, paths, review_errors
 from artifact_checks import verify_build
 
 
@@ -141,7 +141,7 @@ def packet_g3(experiment: Path) -> list[str]:
         f"- 採点基準: {len(rubric)}件、失敗: {', '.join(failed) if failed else 'なし'}",
         f"- 教授視点評価: {professor.get('overall', {}).get('verdict')} / " + (f"{professor['overall']['score_percent']}点（教員配点による計算）" if professor.get('overall', {}).get('score_percent') is not None else "数値採点なし（配点未提供）") + " / 弱点: " + "；".join(professor.get('overall', {}).get('weaknesses', [])),
         f"- PDF検査: 視覚 {final.get('visual_review', {}).get('status')} / 技術 {final.get('technical_review', {}).get('status')}",
-        "- 本人原文との差分: quality/PROSE_DIFF.md / 詳細評価: PROFESSOR_EVALUATION.md / 引継ぎ: HANDOFF.md",
+        "- 本文の変更案内: quality/PROSE_CHANGES.md（詳細: quality/PROSE_DIFF.md） / 詳細評価: PROFESSOR_EVALUATION.md / 引継ぎ: HANDOFF.md",
     ]
 
 
@@ -259,6 +259,45 @@ def content_hash(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def next_actions(experiment: Path) -> list[str]:
+    """Read-only resumption summary; never substitute it for a gate audit."""
+    state = load_state(experiment)
+    for gate in ("G1", "G2"):
+        ok, reason = approval_current(experiment, gate)
+        if not ok:
+            awaiting = state["gates"][gate]["status"] == "awaiting_user"
+            unchanged = gate_digest(experiment, gate)[0] == state["gates"][gate].get("artifact_digest")
+            return [f"次: {gate}の本人判断を待つ" if awaiting and unchanged else f"次: {gate}の確認材料を準備・更新する",
+                    f"理由: {reason}", f"読む場所: workflow/{gate}_REVIEW.md / " +
+                    ("spec/ASSIGNMENT_REQUIREMENTS.yaml / spec/EXPERIMENT_PLAN.yaml" if gate == "G1" else "spec/WRITING_PLAN.yaml / RESULT_TRACEABILITY.md")]
+    plan = load_yaml(experiment / "spec/WRITING_PLAN.yaml")
+    missing, unreviewed, decisions = [], [], []
+    for slot in plan.get("slots", []):
+        original, typeset = paths(experiment, slot)
+        if not original.is_file():
+            missing.append(slot["slot_id"])
+        elif not typeset.is_file() or slot.get("status") != "typeset" or review_errors(experiment, slot):
+            unreviewed.append(slot["slot_id"])
+        if slot.get("semantic_change") == "pending_user_approval":
+            decisions.append(slot["slot_id"])
+    def short(items):
+        return (", ".join(items[:10]) + (f"（ほか{len(items)-10}件）" if len(items) > 10 else "")) if items else "なし"
+    lines = [f"未提出: {short(missing)}", f"組版・再確認: {short(unreviewed)}", f"意味変更の本人判断待ち: {short(decisions)}"]
+    if missing or unreviewed or decisions:
+        lines += ["次: 受領済みの対象枠だけを校正する。未提出枠は代筆しない。",
+                  "読む場所: spec/WRITING_PLAN.yaml の対象枠 / prose/original/ / prose/typeset/ / 関連する証拠だけ"]
+    else:
+        ok, _ = approval_current(experiment, "G3")
+        if ok:
+            lines += ["次: 完了（提出は本人が行う）" if state.get("status") == "released" else "次: workflow.py release で提出版を固定する"]
+        else:
+            g3 = state["gates"]["G3"]
+            waiting = g3["status"] == "awaiting_user" and gate_digest(experiment, "G3")[0] == g3.get("artifact_digest")
+            lines += ["次: G3の本人判断を待つ" if waiting else "次: 候補PDFと変更に影響する確認記録を更新し、G3を準備する",
+                      "読む場所: quality/PROSE_CHANGES.md / build/final-candidate.pdf / quality/FINAL_CHECK.yaml / quality/PROFESSOR_REVIEW.yaml"]
+    return lines
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest="command", required=True)
@@ -357,6 +396,7 @@ def main() -> int:
         for gate in GATES:
             ok, reason = approval_current(experiment, gate)
             print(f"{gate}: {'有効' if ok else state['gates'][gate]['status']} - {reason}")
+        print("\n".join(next_actions(experiment)))
         return 0
 
     if args.command == "prepare-review":
@@ -366,6 +406,9 @@ def main() -> int:
         run_validation(experiment, args.gate)
         if args.gate == "G3":
             write_diff(experiment, load_yaml(experiment / "spec/WRITING_PLAN.yaml"))
+        if args.gate == "G2":
+            from report_views import generate
+            generate(experiment, "writing")
         digest, manifest = gate_digest(experiment, args.gate)
         packet = review_path(experiment, args.gate)
         packet.parent.mkdir(parents=True, exist_ok=True)

@@ -44,3 +44,11 @@ G1で確定した採点基準に沿う教授視点の模擬評価。基準別の
 必要に応じて、再現用コード、処理済みデータ、環境情報を含める。通常の技術ログは提出物へ含めず、個人情報や秘密情報も含めない。
 
 `build/draft.pdf`、`build/main.pdf`、`build/final-candidate.pdf` は提出版ではない。`deliverables/report.pdf` だけを提出用と呼んでよい。
+
+## 重複記入を避ける正本
+
+- `SOURCE_AUDIT.md` は `spec/SOURCES.yaml` と `spec/CLAIMS.yaml` から生成する。
+- `PROFESSOR_EVALUATION.md` と `QUALITY_REVIEW.yaml` の採点対応は `quality/PROFESSOR_REVIEW.yaml` から生成する。技術チェックの証拠は `QUALITY_REVIEW.yaml` に一度だけ記す。
+- `RESULT_TRACEABILITY.md` は数値・算出方法の正本、`WORKLOG.md` は実行と判断の時系列の正本とする。他文書に全文転記しない。
+- `HANDOFF.md` は成果物への入口、主要結果の短い要約、未解決事項、再生成方法に絞り、監査表を複製しない。
+- 生成マーカーのある資料は正本との一致を検査する。既存の手書き資料を移行する際は独自の注記を正本へ移してから `--replace-legacy` を使い、旧版を保存する。

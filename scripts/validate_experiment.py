@@ -16,6 +16,8 @@ from workflow_core import approval_current, content_fingerprint
 from artifact_checks import verify_build
 from review_prose import paths as prose_paths, review_errors
 from tex_sources import document_text, strip_comments
+from report_views import freshness_errors, rubric_projection
+from layout_tuning import settings as layout_settings
 
 
 PLACEHOLDER = re.compile(r"\bTODO\b|指定待ち|未確認|未実施|\{\{.+?\}\}")
@@ -514,6 +516,7 @@ def validate(experiment: Path, phase: int, candidate: bool = False, skeleton: bo
             if result_ids:
                 audit.require(not (linked_results - result_ids), f"PHASE 5: claim {claim_id} references unknown result IDs")
         source_audit = text_without_placeholders(experiment / "SOURCE_AUDIT.md", audit, 5)
+        audit.errors.extend(freshness_errors(experiment, "sources"))
         for source_id in source_ids:
             audit.require(source_id in source_audit, f"PHASE 5: SOURCE_AUDIT lacks {source_id}")
         for claim in claims:
@@ -531,6 +534,10 @@ def validate(experiment: Path, phase: int, candidate: bool = False, skeleton: bo
             audit.require(set(slot.get("rubric_ids", [])) <= rubric_ids, f"PHASE 5: writing slot {slot.get('slot_id')} has unknown rubric IDs")
             audit.require(set(slot.get("evidence_ids", [])) <= evidence_ids, f"PHASE 5: writing slot {slot.get('slot_id')} has unknown evidence IDs")
         check_style_contract(audit)
+        try:
+            layout_settings(experiment)
+        except ValueError as exc:
+            audit.errors.append(str(exc))
         overrides = load_structured(experiment, "spec/STYLE_OVERRIDES.yaml", audit)
         allowed = {str(item.get("setting")) for item in overrides.get("overrides", [])}
         check_tex(experiment, audit, allowed, allow_planned_references=True)
@@ -566,8 +573,6 @@ def validate(experiment: Path, phase: int, candidate: bool = False, skeleton: bo
             example_only=workflow_state.get("example_only") is True,
             partial=draft,
         )
-        if not draft:
-            text_without_placeholders(experiment / "HANDOFF.md", audit, 6)
         requirements = requirements or load_structured(experiment, "spec/ASSIGNMENT_REQUIREMENTS.yaml", audit)
         rubric_path = experiment / "RUBRIC_TRACEABILITY.md"
         if rubric_path.is_file():
@@ -585,6 +590,7 @@ def validate(experiment: Path, phase: int, candidate: bool = False, skeleton: bo
         audit.require(any(marker in text for marker in ("意味変更: なし", "意味変更: ユーザー承認済み")), "PHASE 7: semantic-edit status is unresolved")
 
     if phase >= 8:
+        text_without_placeholders(experiment / "HANDOFF.md", audit, 8)
         required_files = [
             "HANDOFF.md",
             "PROFESSOR_EVALUATION.md",
@@ -614,13 +620,20 @@ def validate(experiment: Path, phase: int, candidate: bool = False, skeleton: bo
 
         quality = load_structured(experiment, "quality/QUALITY_REVIEW.yaml", audit)
         professor = load_structured(experiment, "quality/PROFESSOR_REVIEW.yaml", audit)
+        audit.errors.extend(freshness_errors(experiment, "evaluation"))
+        if quality.get("rubric_source") == "professor_review":
+            try:
+                audit.require(quality.get("rubric") == rubric_projection(professor), "PHASE 8: generated rubric is stale; sync professor review")
+            except (KeyError, TypeError):
+                audit.errors.append("PHASE 8: invalid professor rubric projection")
         rubric_reviews = quality.get("rubric", [])
         reviewed_ids = unique_ids(rubric_reviews, "rubric_id", audit, 8)
         requirements = requirements or load_structured(experiment, "spec/ASSIGNMENT_REQUIREMENTS.yaml", audit)
         required_rubrics = {item.get("rubric_id") for item in requirements.get("rubric_criteria", []) if item.get("required")}
         audit.require(required_rubrics <= reviewed_ids, f"PHASE 8: missing rubric reviews: {sorted(required_rubrics - reviewed_ids)}")
         for item in rubric_reviews:
-            audit.require(item.get("status") in {"passed", "not_applicable"}, f"PHASE 8: rubric {item.get('rubric_id')} did not pass")
+            if item.get("rubric_id") in required_rubrics:
+                audit.require(item.get("status") == "passed", f"PHASE 8: rubric {item.get('rubric_id')} did not pass")
             audit.require(bool(item.get("report_locators")), f"PHASE 8: rubric {item.get('rubric_id')} has no report locator")
             audit.require(bool(item.get("evidence")), f"PHASE 8: rubric {item.get('rubric_id')} has no evidence")
         for name, check in quality.get("content_checks", {}).items():
