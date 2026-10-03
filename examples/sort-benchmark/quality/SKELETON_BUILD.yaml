@@ -1,0 +1,71 @@
+version: 1
+mode: skeleton
+inputs_digest: a4096d9197fbd620e308ad3b0ae1893f4e63d2fe401ea783544c62ab2841d16a
+inputs:
+- path: experiment/analysis/analyze.py
+  sha256: f45ac9d9e2079c07761e8c5addc849c91104118f96da161b666b2df9845cf016
+  bytes: 2628
+- path: experiment/data/processed/summary.csv
+  sha256: 6adafddf494c838d38454c998ea064ae963f05de90fa0741afff07fcbcb2ba15
+  bytes: 257
+- path: experiment/report/generated/bubble.dat
+  sha256: a985412bf4b069a03317f9afce892c8e1925e72b3acf7971e59db8e30c5ba5c9
+  bytes: 60
+- path: experiment/report/generated/quick.dat
+  sha256: 711273e06211388f8bdcfad578e133231752e8b0709232b00fd9c30c1679654e
+  bytes: 56
+- path: experiment/report/generated/summary_table.tex
+  sha256: e6be4c0b5560493ad0571c66ac31d35d9026c22af37b5bbc70f384b0115a2eba
+  bytes: 287
+- path: experiment/report/main.tex
+  sha256: b6ab10e42193df156dfce1abecf8a600cf02dc5bc2d81b10a4ecc36cc068dbc4
+  bytes: 877
+- path: experiment/report/meta.tex
+  sha256: a7f9812e1f9da58af6da86c1f025698621a8778d0011eec4ab212c2769a9910e
+  bytes: 481
+- path: experiment/report/sections/01-purpose.tex
+  sha256: 6a21370b0ac18adc0a49b02a6c23881a87b83e5183b37fdb103d8849ba4f12fd
+  bytes: 45
+- path: experiment/report/sections/02-method.tex
+  sha256: 142189765f15af7cd7fbaff9c2431c8285727257178e9465e9b03fbcd1c895e2
+  bytes: 451
+- path: experiment/report/sections/03-results.tex
+  sha256: bc40b89c2c3eff6ec5b2258542e47c7c930df39ec85ec9aaa5c24af5f4e38ac6
+  bytes: 1142
+- path: experiment/report/sections/04-discussion.tex
+  sha256: 73359100ff33caf81d93505ca2418edbacc2a7ba75f8568099f8e3963134d8e2
+  bytes: 73
+- path: experiment/report/sections/05-conclusion.tex
+  sha256: 348c02eb8c639574442c9d6bcfdeb39092e4ae383de826a4057a0f26c5a6fdf4
+  bytes: 45
+- path: experiment/report/sections/90-references.tex
+  sha256: 1dea2b4f22179a7dbba2577ba5e0d3c4ff62ffd3e438e07c2696f082759680a5
+  bytes: 696
+- path: experiment/spec/REPORT_META.yaml
+  sha256: 70b858d242cb2c4a630219cf1a3282070c615a56816d3605b11b82ef9c86f78c
+  bytes: 602
+- path: experiment/spec/STYLE_OVERRIDES.yaml
+  sha256: 5807867e425d13adc52d5250d29b8530043f64e5680b8f32c94971c10053f761
+  bytes: 14
+- path: experiment/spec/WRITING_PLAN.yaml
+  sha256: b61d2a9887013235dea04579b5e2f8447385dcc13be3e70effa6c0956b514b7a
+  bytes: 3166
+- path: framework/config/style-contract.yaml
+  sha256: ce6e5227df9314656b8597bef8269ce1f469e8b9cfdf5ab81beee2acc0eadf49
+  bytes: 550
+- path: framework/tex/labreport.cls
+  sha256: 186dc5d5f54ca7e039a7538ddbb7b67d0ab3aaef51f707ef29ea8e28d724d81f
+  bytes: 4159
+dependencies:
+- report/generated/bubble.dat
+- report/generated/quick.dat
+- report/generated/summary_table.tex
+- report/main.tex
+- report/meta.tex
+- report/sections/01-purpose.tex
+- report/sections/02-method.tex
+- report/sections/03-results.tex
+- report/sections/04-discussion.tex
+- report/sections/05-conclusion.tex
+- report/sections/90-references.tex
+pdf_sha256: ebf8e460701b8362f1d23bd0e2f0b3592bb16b1d080504161104811006d8308a

@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import hashlib
+import os
+import tempfile
 from pathlib import Path
 
 import yaml
@@ -26,6 +28,7 @@ GATE_PATHS = {
         "spec/ACADEMIC_INTEGRITY.yaml",
         "spec/EXPERIMENT_PLAN.yaml",
         "spec/CONTEXT_INDEX.yaml",
+        "spec/STYLE_OVERRIDES.yaml",
     ),
     "G2": (
         "spec/EXECUTION_MANIFEST.yaml",
@@ -39,6 +42,7 @@ GATE_PATHS = {
         "SOURCE_AUDIT.md",
         "spec/WRITING_PLAN.yaml",
         "report",
+        "quality/SKELETON_BUILD.yaml",
     ),
     "G3": (
         "report",
@@ -53,6 +57,11 @@ GATE_PATHS = {
         "quality/QUALITY_REVIEW.yaml",
         "quality/PROFESSOR_REVIEW.yaml",
         "quality/RENDER_MANIFEST.yaml",
+        "quality/CANDIDATE_BUILD.yaml",
+        "quality/PROSE_DIFF.md",
+        "SOURCE_AUDIT.md",
+        "RESULT_TRACEABILITY.md",
+        "spec/ACADEMIC_INTEGRITY.yaml",
         "build/final-candidate.pdf",
     ),
 }
@@ -83,11 +92,15 @@ def load_state(experiment: Path) -> dict:
 def write_state(experiment: Path, state: dict) -> None:
     path = state_path(experiment)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        yaml.safe_dump(state, allow_unicode=True, sort_keys=False),
-        encoding="utf-8",
-        newline="\n",
-    )
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", newline="\n", prefix=".state-", dir=path.parent, delete=False) as stream:
+            temporary = Path(stream.name)
+            stream.write(yaml.safe_dump(state, allow_unicode=True, sort_keys=False))
+        os.replace(temporary, path)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
 
 
 def normalized_payload(path: Path) -> bytes:
@@ -108,6 +121,11 @@ def gate_fingerprint(experiment: Path, gate: str, path: Path) -> tuple[str, int]
     Prose receipt status, original hashes, and proofreading notes are expected to
     change after G2. G3 hashes the complete file through content_fingerprint.
     """
+    if gate == "G1" and path == experiment / "spec/ACADEMIC_INTEGRITY.yaml":
+        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        data.pop("confirmations", None)
+        payload = yaml.safe_dump(data, allow_unicode=True, sort_keys=True).encode("utf-8")
+        return hashlib.sha256(payload).hexdigest(), len(payload)
     if gate == "G2" and path == experiment / "spec" / "WRITING_PLAN.yaml":
         data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
         stable = {
@@ -163,6 +181,15 @@ def gate_manifest(experiment: Path, gate: str) -> list[dict[str, object]]:
             "sha256": digest,
             "bytes": size,
         })
+    # Approval of evidence/structure is conditional on the exact upstream plan.
+    for prior in GATES[:GATES.index(gate)]:
+        digest, _ = gate_digest(experiment, prior)
+        manifest.append({"path": f"@approval/{prior}", "sha256": digest, "bytes": 0})
+    if gate == "G2":
+        data = yaml.safe_load((experiment / "spec/ACADEMIC_INTEGRITY.yaml").read_text(encoding="utf-8")) or {}
+        subset = {key: data.get("confirmations", {}).get(key) for key in ("actual_work_status", "data_not_fabricated")}
+        payload = yaml.safe_dump(subset, sort_keys=True).encode("utf-8")
+        manifest.append({"path": "@execution-confirmations", "sha256": hashlib.sha256(payload).hexdigest(), "bytes": len(payload)})
     # build/ is intentionally ignored by Git. After release, a clean clone can
     # therefore use the byte-identical released PDF as the logical candidate
     # artifact when verifying the recorded G3 approval.
@@ -211,6 +238,18 @@ def approval_current(experiment: Path, gate: str) -> tuple[bool, str]:
     current, _ = gate_digest(experiment, gate)
     if current != approval.get("artifact_digest"):
         return False, f"{gate} approval is stale because reviewed artifacts changed"
+    if gate in {"G2", "G3"}:
+        from artifact_checks import verify_build
+        mode = "skeleton" if gate == "G2" else "candidate"
+        pdf = experiment / "build" / ("skeleton.pdf" if gate == "G2" else "final-candidate.pdf")
+        if gate == "G2" and not pdf.is_file():
+            pdf = experiment / "preview/skeleton.pdf"
+        if gate == "G3" and not pdf.is_file():
+            pdf = experiment / "deliverables/report.pdf"
+        try:
+            verify_build(experiment, mode, pdf if pdf.is_file() else None)
+        except (ValueError, KeyError, TypeError, OSError) as exc:
+            return False, f"{gate}: {exc}"
     return True, "approved and current"
 
 

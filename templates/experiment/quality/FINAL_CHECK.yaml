@@ -1,3 +1,5 @@
+reviewed_pdf_sha256: null
+reviewed_inputs_digest: null
 visual_review:
   status: pending
   reviewer: null

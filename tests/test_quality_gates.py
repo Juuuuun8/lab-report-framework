@@ -12,6 +12,7 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from workflow_core import gate_digest  # noqa: E402
 from workflow import packet_g1  # noqa: E402
+from artifact_checks import record_build  # noqa: E402
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -59,6 +60,22 @@ class QualityGateTests(unittest.TestCase):
         for slot in writing["slots"]:
             slot["authorship"] = "user"
         writing_path.write_text(yaml.safe_dump(writing, allow_unicode=True, sort_keys=False), encoding="utf-8")
+        # These tests relabel an already typeset fictional fixture, not an actual
+        # experiment. Rebind its fixture records to that deliberately changed label.
+        for mode in ("skeleton", "candidate"):
+            source = SAMPLE / "build" / ("skeleton.pdf" if mode == "skeleton" else "final-candidate.pdf")
+            if not source.is_file() and mode == "candidate":
+                source = SAMPLE / "deliverables/report.pdf"
+            if not source.is_file() and mode == "skeleton":
+                source = SAMPLE / "preview/skeleton.pdf"
+            record = record_build(target, mode, source)
+            if mode == "candidate":
+                for name in ("FINAL_CHECK", "QUALITY_REVIEW", "PROFESSOR_REVIEW"):
+                    path = target / "quality" / f"{name}.yaml"
+                    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+                    data.update(reviewed_pdf_sha256=record["pdf_sha256"], reviewed_inputs_digest=record["inputs_digest"])
+                    path.write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False), encoding="utf-8")
+        self.refresh_gate(target, "G1")
         self.refresh_gate(target, "G2")
         return target
 

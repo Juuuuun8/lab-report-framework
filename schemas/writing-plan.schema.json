@@ -6,7 +6,7 @@
   "required": ["version", "status", "skeleton_pdf", "slots"],
   "properties": {
     "version": {"const": 1},
-    "status": {"enum": ["planning", "skeleton_ready", "prose_complete"]},
+    "status": {"enum": ["planning", "skeleton_ready", "prose_partial", "prose_complete"]},
     "skeleton_pdf": {"const": "build/skeleton.pdf"},
     "slots": {
       "type": "array",
@@ -30,7 +30,19 @@
           "original_sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
           "typeset_file": {"type": "string", "pattern": "^prose/typeset/P-[0-9]{3}\\.tex$"},
           "semantic_change": {"enum": ["none", "user_approved", "pending_user_approval"]},
-          "proofread_notes": {"type": ["string", "null"]}
+          "proofread_notes": {"type": ["string", "null"]},
+          "review": {
+            "type": "object", "additionalProperties": false,
+            "required": ["original_sha256", "typeset_sha256", "status", "decision_text", "note", "reviewed_at"],
+            "properties": {
+              "original_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+              "typeset_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+              "status": {"enum": ["meaning_unchanged", "user_approved"]},
+              "decision_text": {"type": ["string", "null"]},
+              "note": {"type": "string", "minLength": 1},
+              "reviewed_at": {"type": "string", "minLength": 10}
+            }
+          }
         }
       }
     }

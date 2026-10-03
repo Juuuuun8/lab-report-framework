@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "FINAL_CHECK.yaml",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["reviewed_pdf_sha256", "reviewed_inputs_digest", "visual_review", "technical_review"],
+  "properties": {
+    "reviewed_pdf_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "reviewed_inputs_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "visual_review": {"$ref": "#/$defs/review"},
+    "technical_review": {"$ref": "#/$defs/review"}
+  },
+  "$defs": {
+    "review": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "reviewer", "reviewed_at", "notes"],
+      "properties": {
+        "status": {"enum": ["passed", "pending", "failed"]},
+        "reviewer": {"type": "string", "minLength": 1},
+        "reviewed_at": {"type": "string", "minLength": 10},
+        "notes": {"type": "string", "minLength": 1},
+        "rendered_pages": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

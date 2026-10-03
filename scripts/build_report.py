@@ -13,6 +13,8 @@ from pathlib import Path
 
 import yaml
 
+from artifact_checks import record_build, recorder_dependencies
+
 
 TEX_ESCAPES = {
     "\\": r"\textbackslash{}",
@@ -63,14 +65,14 @@ def main() -> int:
     if not (experiment / "report" / "main.tex").is_file():
         parser.error(f"not an experiment directory: {experiment}")
 
+    generate_meta(experiment)
     required_phase = 7 if args.mode == "candidate" else (5 if args.mode == "skeleton" else 6)
     subprocess.run(
-        [sys.executable, str(root / "scripts" / "validate_experiment.py"), str(experiment), "--phase", str(required_phase)],
+        [sys.executable, str(root / "scripts" / "validate_experiment.py"), str(experiment), "--phase", str(required_phase), *(["--draft"] if args.mode == "draft" else [])],
         cwd=root,
         check=True,
     )
 
-    generate_meta(experiment)
     report_dir = experiment / "report"
     build_dir = experiment / "build"
     build_dir.mkdir(exist_ok=True)
@@ -91,8 +93,12 @@ def main() -> int:
     command = [
         "latexmk",
         "-lualatex",
+        # IfFileExists can introduce new prose files absent from the previous
+        # recorder. Always rerun TeX rather than reusing a cached partial draft.
+        "-g",
         "-interaction=nonstopmode",
         "-halt-on-error",
+        "-recorder",
         f"-outdir={build_dir}",
         "main.tex",
     ]
@@ -135,6 +141,7 @@ def main() -> int:
     }
     output = build_dir / names[args.mode]
     shutil.copy2(pdf, output)
+    record_build(experiment, args.mode, output, recorder_dependencies(experiment))
     print(output)
     return 0
 

@@ -1,0 +1,134 @@
+version: 1
+mode: candidate
+inputs_digest: 5a94cb3e57bbd4908f68e30afd5d14572cde1c627aaf11fed0186d0104ea5c9b
+inputs:
+- path: experiment/analysis/analyze.py
+  sha256: f45ac9d9e2079c07761e8c5addc849c91104118f96da161b666b2df9845cf016
+  bytes: 2628
+- path: experiment/data/processed/summary.csv
+  sha256: 6adafddf494c838d38454c998ea064ae963f05de90fa0741afff07fcbcb2ba15
+  bytes: 257
+- path: experiment/prose/original/P-001.md
+  sha256: df0ffd843a0a7bb6baba3d384c7f45c4edc34f454be74dd76f14138f4d39099d
+  bytes: 388
+- path: experiment/prose/original/P-002.md
+  sha256: 05285a0394dcdafebc72595e17ae877eb14665d434238c306db1911bc2597dc0
+  bytes: 342
+- path: experiment/prose/original/P-003.md
+  sha256: 2271e72a2ef8051ae151c7b1c5814a8fab32e29b6afbd85d4c038995c15db77b
+  bytes: 287
+- path: experiment/prose/original/P-004.md
+  sha256: 592d97cdb766f6fe8f79b7a7ef6bbe36104f4828e2010432e36f4274ff2e000f
+  bytes: 187
+- path: experiment/prose/original/P-005.md
+  sha256: ce7619223864da72b1a5cec7a940dc4ecffd955a46ab0431f0ae1cdf662fb1b5
+  bytes: 211
+- path: experiment/prose/original/P-006.md
+  sha256: 992c4f368a1eb10a4a98c9e60f9eba343c94c6095453c066660c7deb243d340e
+  bytes: 287
+- path: experiment/prose/original/P-007.md
+  sha256: be799ca52122b6701b4dc484a2d64370181ba4ef78b1b1d1428b3fdfaa0bcee9
+  bytes: 563
+- path: experiment/prose/original/P-008.md
+  sha256: 04a59a2420686e188f051edcef2c97e9bdf2d75cb0a661fe75a53c916661bbc2
+  bytes: 482
+- path: experiment/prose/original/P-009.md
+  sha256: 341d6abb02b8046f891fe4c61a655b40b607f9a7370cd798bb5f5140e0e0105a
+  bytes: 413
+- path: experiment/prose/typeset/P-001.tex
+  sha256: df0ffd843a0a7bb6baba3d384c7f45c4edc34f454be74dd76f14138f4d39099d
+  bytes: 388
+- path: experiment/prose/typeset/P-002.tex
+  sha256: 7ad0021d41449fc965fcb00efac59bcb6564d71e3c681de2e0430c6a6331b8f9
+  bytes: 344
+- path: experiment/prose/typeset/P-003.tex
+  sha256: c30c1b4e78c706dce50055c3dba3c7c8247e04f105b6c4f951f78e1699fad121
+  bytes: 327
+- path: experiment/prose/typeset/P-004.tex
+  sha256: 044d04341f5233f50048a8bad6fe37f2e0749f175499a483e0e5d15359bfae43
+  bytes: 221
+- path: experiment/prose/typeset/P-005.tex
+  sha256: 9eb7db41032e2f7c776f3944f989c737bfc44163dc2a8877f658466c6337635a
+  bytes: 239
+- path: experiment/prose/typeset/P-006.tex
+  sha256: 69162a6ff448db450af31f527be9e63c4cd646518544932d8ff14639384ac6f1
+  bytes: 303
+- path: experiment/prose/typeset/P-007.tex
+  sha256: c063343b17ed036c28ed43eafa7a37084bd32db6a13b53a4d267e507b666c66c
+  bytes: 640
+- path: experiment/prose/typeset/P-008.tex
+  sha256: 04a59a2420686e188f051edcef2c97e9bdf2d75cb0a661fe75a53c916661bbc2
+  bytes: 482
+- path: experiment/prose/typeset/P-009.tex
+  sha256: 341d6abb02b8046f891fe4c61a655b40b607f9a7370cd798bb5f5140e0e0105a
+  bytes: 413
+- path: experiment/report/generated/bubble.dat
+  sha256: a985412bf4b069a03317f9afce892c8e1925e72b3acf7971e59db8e30c5ba5c9
+  bytes: 60
+- path: experiment/report/generated/quick.dat
+  sha256: 711273e06211388f8bdcfad578e133231752e8b0709232b00fd9c30c1679654e
+  bytes: 56
+- path: experiment/report/generated/summary_table.tex
+  sha256: e6be4c0b5560493ad0571c66ac31d35d9026c22af37b5bbc70f384b0115a2eba
+  bytes: 287
+- path: experiment/report/main.tex
+  sha256: b6ab10e42193df156dfce1abecf8a600cf02dc5bc2d81b10a4ecc36cc068dbc4
+  bytes: 877
+- path: experiment/report/meta.tex
+  sha256: a7f9812e1f9da58af6da86c1f025698621a8778d0011eec4ab212c2769a9910e
+  bytes: 481
+- path: experiment/report/sections/01-purpose.tex
+  sha256: 6a21370b0ac18adc0a49b02a6c23881a87b83e5183b37fdb103d8849ba4f12fd
+  bytes: 45
+- path: experiment/report/sections/02-method.tex
+  sha256: 142189765f15af7cd7fbaff9c2431c8285727257178e9465e9b03fbcd1c895e2
+  bytes: 451
+- path: experiment/report/sections/03-results.tex
+  sha256: bc40b89c2c3eff6ec5b2258542e47c7c930df39ec85ec9aaa5c24af5f4e38ac6
+  bytes: 1142
+- path: experiment/report/sections/04-discussion.tex
+  sha256: 73359100ff33caf81d93505ca2418edbacc2a7ba75f8568099f8e3963134d8e2
+  bytes: 73
+- path: experiment/report/sections/05-conclusion.tex
+  sha256: 348c02eb8c639574442c9d6bcfdeb39092e4ae383de826a4057a0f26c5a6fdf4
+  bytes: 45
+- path: experiment/report/sections/90-references.tex
+  sha256: 1dea2b4f22179a7dbba2577ba5e0d3c4ff62ffd3e438e07c2696f082759680a5
+  bytes: 696
+- path: experiment/spec/REPORT_META.yaml
+  sha256: 70b858d242cb2c4a630219cf1a3282070c615a56816d3605b11b82ef9c86f78c
+  bytes: 602
+- path: experiment/spec/STYLE_OVERRIDES.yaml
+  sha256: 5807867e425d13adc52d5250d29b8530043f64e5680b8f32c94971c10053f761
+  bytes: 14
+- path: experiment/spec/WRITING_PLAN.yaml
+  sha256: b61d2a9887013235dea04579b5e2f8447385dcc13be3e70effa6c0956b514b7a
+  bytes: 3166
+- path: framework/config/style-contract.yaml
+  sha256: ce6e5227df9314656b8597bef8269ce1f469e8b9cfdf5ab81beee2acc0eadf49
+  bytes: 550
+- path: framework/tex/labreport.cls
+  sha256: 186dc5d5f54ca7e039a7538ddbb7b67d0ab3aaef51f707ef29ea8e28d724d81f
+  bytes: 4159
+dependencies:
+- prose/typeset/P-001.tex
+- prose/typeset/P-002.tex
+- prose/typeset/P-003.tex
+- prose/typeset/P-004.tex
+- prose/typeset/P-005.tex
+- prose/typeset/P-006.tex
+- prose/typeset/P-007.tex
+- prose/typeset/P-008.tex
+- prose/typeset/P-009.tex
+- report/generated/bubble.dat
+- report/generated/quick.dat
+- report/generated/summary_table.tex
+- report/main.tex
+- report/meta.tex
+- report/sections/01-purpose.tex
+- report/sections/02-method.tex
+- report/sections/03-results.tex
+- report/sections/04-discussion.tex
+- report/sections/05-conclusion.tex
+- report/sections/90-references.tex
+pdf_sha256: a9798f35b47ec2cf89268f6a4a1d4bef32c05edee088912d7e1d43ad6fec9bf2

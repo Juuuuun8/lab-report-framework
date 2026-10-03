@@ -8,6 +8,7 @@ import hashlib
 import shutil
 import subprocess
 import sys
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -24,6 +25,8 @@ from workflow_core import (
     state_path,
     write_state,
 )
+from review_prose import write_diff
+from artifact_checks import verify_build
 
 
 GATE_PHASE = {"G1": 2, "G2": 5, "G3": 8}
@@ -100,11 +103,11 @@ def packet_g1(experiment: Path) -> list[str]:
     assignment = req.get("assignment", {})
     rubric_source = req.get("rubric_source", {})
     lines = [
-        f"- 科目・課題: {assignment.get('course')} / {assignment.get('title')}",
-        f"- 提出形式・確認項目: {assignment.get('submission_format')} / 要求{len(req.get('requirements', []))}件・採点基準{len(req.get('rubric_criteria', []))}件",
-        f"- 採点基準の由来: {rubric_source.get('status')}（本人確認: {rubric_source.get('confirmed_by_user')}）",
+        f"- 科目・課題・表紙: {assignment.get('course')} / {assignment.get('title')} / " + "、".join(f"{item['label']}: {item['value']}" for item in meta.get('cover', {}).get('fields', [])),
+        f"- 提出条件: {assignment.get('submission_format')} / 期限: {assignment.get('deadline')} / " + "；".join(f"{item['requirement_id']}: {item['description']}（{item['source_locator']}）" for item in req.get('requirements', [])),
+        f"- 採点基準: {rubric_source.get('status')} / " + "；".join(f"{item['rubric_id']}: {item['criterion']} / 合格条件: {'、'.join(item['acceptance_criteria'])}（{item['source_locator']}）" for item in req.get('rubric_criteria', [])),
         f"- AI利用状態: {integrity.get('ai_use', {}).get('status')} / 本文: 本人執筆のみ",
-        f"- 実験目的・反復: {plan.get('objective')} / {plan.get('replications')}回",
+        f"- 推奨実験計画: {plan.get('objective')} / {plan.get('replications')}回 / 条件: {plan.get('independent_variables')} / 除外: {plan.get('exclusion_rules')} / 停止: {plan.get('stop_conditions')}（詳細: spec/EXPERIMENT_PLAN.yaml）",
     ]
     return lines
 
@@ -119,7 +122,7 @@ def packet_g2(experiment: Path) -> list[str]:
     writing = load_yaml(experiment / "spec" / "WRITING_PLAN.yaml")
     return [
         f"- 実行数: {len(manifest.get('runs', []))}",
-        f"- 主要結果: {', '.join(result_ids)}",
+        f"- 主要結果: {', '.join(result_ids)}（値・算出方法: RESULT_TRACEABILITY.md）",
         f"- 主張数: {len(claims)}、検証済み出典数: {len(sources)}、文章枠: {len(writing.get('slots', []))}",
         f"- 計画逸脱: {'; '.join(limited(deviations, 3)) if deviations else 'なし'}",
         "- 骨格PDF: build/skeleton.pdf（見出し・図表・式・コード・文章枠を確認）",
@@ -136,9 +139,9 @@ def packet_g3(experiment: Path) -> list[str]:
     return [
         f"- 最終候補PDF: {pdf.relative_to(experiment).as_posix()} ({pdf.stat().st_size} bytes)",
         f"- 採点基準: {len(rubric)}件、失敗: {', '.join(failed) if failed else 'なし'}",
-        f"- 教授視点評価: {professor.get('overall', {}).get('verdict')} / {professor.get('overall', {}).get('score_percent')}点",
+        f"- 教授視点評価: {professor.get('overall', {}).get('verdict')} / " + (f"{professor['overall']['score_percent']}点（教員配点による計算）" if professor.get('overall', {}).get('score_percent') is not None else "数値採点なし（配点未提供）") + " / 弱点: " + "；".join(professor.get('overall', {}).get('weaknesses', [])),
         f"- PDF検査: 視覚 {final.get('visual_review', {}).get('status')} / 技術 {final.get('technical_review', {}).get('status')}",
-        "- 詳細: HANDOFF.md、PROFESSOR_EVALUATION.md",
+        "- 本人原文との差分: quality/PROSE_DIFF.md / 詳細評価: PROFESSOR_EVALUATION.md / 引継ぎ: HANDOFF.md",
     ]
 
 
@@ -166,7 +169,7 @@ USER_CHECKS = {
 }
 
 
-def build_review(experiment: Path, gate: str, manifest: list[dict]) -> str:
+def build_review(experiment: Path, gate: str, manifest: list[dict], previous: list[dict] | None = None) -> str:
     lines = [
         f"# {gate}: {GATE_TITLES[gate]}の確認",
         "",
@@ -191,6 +194,13 @@ def build_review(experiment: Path, gate: str, manifest: list[dict]) -> str:
         f"問題がなければ `承認 {gate}`、修正が必要なら `修正 {gate}: <内容>` と回答してください。",
         "",
     ]
+    if previous:
+        before = {item['path']: item['sha256'] for item in previous}
+        after = {item['path']: item['sha256'] for item in manifest}
+        changed = [key for key in sorted(before.keys() | after.keys()) if before.get(key) != after.get(key)]
+        lines.extend(["## 前回確認からの変更", "", *[f"- {name}" for name in changed], ""])
+        if not changed:
+            lines.append("変更なし。前回の判断材料を再利用できます。")
     return "\n".join(lines)
 
 
@@ -202,37 +212,51 @@ def release(experiment: Path) -> None:
     candidate = experiment / "build" / "final-candidate.pdf"
     if not candidate.is_file():
         raise RuntimeError("final candidate PDF is missing")
-    deliverables = experiment / "deliverables"
-    deliverables.mkdir(exist_ok=True)
-    shutil.copy2(candidate, deliverables / "report.pdf")
-    for name in [
+    # Check before touching any previously released report.
+    run_validation(experiment, "G3")
+    names = [
+        "report.pdf",
         "HANDOFF.md",
         "PROFESSOR_EVALUATION.md",
         "SOURCE_AUDIT.md",
         "RESULT_TRACEABILITY.md",
         "WORKLOG.md",
-    ]:
-        shutil.copy2(experiment / name, deliverables / name)
-    # 課程や本人の希望に応じた補助資料は、存在する場合だけ同梱する。
+    ]
     for name in ["RUBRIC_TRACEABILITY.md", "ORAL_DEFENSE.md"]:
-        optional = experiment / name
-        if optional.is_file():
-            shutil.copy2(optional, deliverables / name)
-        else:
-            (deliverables / name).unlink(missing_ok=True)
-    # v4以前に提出物へ複製していた内部監査ファイルを残さない。
-    (deliverables / "QUALITY_REVIEW.yaml").unlink(missing_ok=True)
-    subprocess.run(
-        [sys.executable, str(repo_root() / "scripts" / "validate_experiment.py"), str(experiment), "--phase", "8"],
-        cwd=repo_root(),
-        check=True,
-    )
-    state = load_state(experiment)
-    state["current_gate"] = "complete"
-    state["status"] = "released"
-    state["released_at"] = now()
-    state["release_sha256"] = hashlib.sha256((deliverables / "report.pdf").read_bytes()).hexdigest()
-    write_state(experiment, state)
+        if (experiment / name).is_file():
+            names.append(name)
+    deliverables = experiment / "deliverables"
+    with tempfile.TemporaryDirectory(prefix=".release-", dir=experiment) as raw:
+        temporary = Path(raw)
+        staged = temporary / "new"
+        backup_dir = experiment / "build/release-backups"
+        backup = backup_dir / temporary.name
+        staged.mkdir()
+        for name in names:
+            source = candidate if name == "report.pdf" else experiment / name
+            shutil.copy2(source, staged / name)
+            if content_hash(source) != content_hash(staged / name):
+                raise RuntimeError(f"release copy differs: {name}")
+        had_previous = deliverables.exists()
+        if had_previous:
+            backup_dir.mkdir(parents=True, exist_ok=True)
+            deliverables.rename(backup)
+        try:
+            staged.rename(deliverables)
+            subprocess.run([sys.executable, str(repo_root() / "scripts/validate_experiment.py"), str(experiment), "--phase", "8"], cwd=repo_root(), check=True)
+            state = load_state(experiment)
+            state.update(current_gate="complete", status="released", released_at=now(), release_sha256=content_hash(deliverables / "report.pdf"))
+            write_state(experiment, state)
+        except BaseException:
+            if deliverables.exists():
+                deliverables.rename(temporary / "failed")
+            if had_previous:
+                backup.rename(deliverables)
+            raise
+
+
+def content_hash(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def main() -> int:
@@ -259,6 +283,8 @@ def main() -> int:
     context_parser.add_argument("experiment", type=Path)
     seal_parser = sub.add_parser("seal-data")
     seal_parser.add_argument("experiment", type=Path)
+    bind_parser = sub.add_parser("bind-reviews", help="bind completed reviews to the PDF actually read; does not mark any review passed")
+    bind_parser.add_argument("experiment", type=Path)
 
     args = parser.parse_args()
     experiment = args.experiment.resolve()
@@ -273,6 +299,16 @@ def main() -> int:
         return 0
 
     state = load_state(experiment)
+    if args.command == "bind-reviews":
+        record = verify_build(experiment, "candidate", experiment / "build/final-candidate.pdf")
+        for name in ("FINAL_CHECK.yaml", "QUALITY_REVIEW.yaml", "PROFESSOR_REVIEW.yaml"):
+            path = experiment / "quality" / name
+            data = load_yaml(path)
+            data["reviewed_pdf_sha256"] = record["pdf_sha256"]
+            data["reviewed_inputs_digest"] = record["inputs_digest"]
+            path.write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False), encoding="utf-8", newline="\n")
+        print("確認記録を候補PDFと入力の版へ接続しました。評価・確認済み状態は変更していません。")
+        return 0
     if args.command == "refresh-context":
         path = experiment / "spec" / "CONTEXT_INDEX.yaml"
         data = load_yaml(path)
@@ -328,11 +364,13 @@ def main() -> int:
         if errors:
             raise RuntimeError("; ".join(errors))
         run_validation(experiment, args.gate)
+        if args.gate == "G3":
+            write_diff(experiment, load_yaml(experiment / "spec/WRITING_PLAN.yaml"))
         digest, manifest = gate_digest(experiment, args.gate)
         packet = review_path(experiment, args.gate)
         packet.parent.mkdir(parents=True, exist_ok=True)
         packet.write_text(
-            build_review(experiment, args.gate, manifest),
+            build_review(experiment, args.gate, manifest, state['gates'][args.gate].get('artifacts')),
             encoding="utf-8",
             newline="\n",
         )
@@ -354,6 +392,9 @@ def main() -> int:
         return 0
 
     if args.command == "approve":
+        errors = require_prior_approvals(experiment, args.gate)
+        if errors:
+            raise RuntimeError("; ".join(errors))
         gate_state = state["gates"][args.gate]
         if gate_state.get("status") != "awaiting_user":
             raise RuntimeError(f"{args.gate} is not awaiting user approval")

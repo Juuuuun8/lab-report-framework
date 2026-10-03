@@ -1,11 +1,13 @@
 visual_review:
   status: passed
-  reviewer: "Codex"
-  reviewed_at: "2026-09-27T12:00:00+09:00"
+  reviewer: Codex
+  reviewed_at: '2026-10-03'
   rendered_pages: 3
-  notes: "v6の骨格PDFと最終候補を各3ページ、180 dpiで画像化して全ページ確認した。骨格は文章1〜9が正しい位置にあり、最終候補では全枠が本文へ置換されている。表紙情報ブロックは中央、リストは上、表は上、図は下にキャプションがあり、節越境、重なり、欠け、軸ラベルの崩れはない。"
+  notes: v7で骨格PDFと最終候補を各3ページ、150 dpiで画像化し全6画像を確認した。骨格に文章1〜9、完成候補に全本文がある。表紙項目は中央ブロック、リスト上・表上・図下キャプション。重なり、欠け、節越境、軸ラベル崩れは見られない。
 technical_review:
   status: passed
-  reviewer: "Codex"
-  reviewed_at: "2026-09-27T12:00:00+09:00"
-  notes: "最終候補はA4・3ページ。フォント埋込み、本文抽出、リンク、採点基準、主張・結果・出典対応、原文9件のハッシュ、未解決文章枠がないことを確認した。G3承認後にのみ提出版へ昇格する。"
+  reviewer: Codex
+  reviewed_at: '2026-10-03'
+  notes: 最終候補はA4・3ページ。生成入力・候補PDF・画像の接続、フォント埋込み、本文抽出、リンク、内部基準、原文9件と組版後の版付きレビューを確認。内部基準なので数値採点はしない。G3の架空例移行承認後のみ固定する。
+reviewed_pdf_sha256: a9798f35b47ec2cf89268f6a4a1d4bef32c05edee088912d7e1d43ad6fec9bf2
+reviewed_inputs_digest: 5a94cb3e57bbd4908f68e30afd5d14572cde1c627aaf11fed0186d0104ea5c9b

@@ -1,43 +1,62 @@
-reviewer: "Codex"
-reviewed_at: "2026-09-25T16:00:00+09:00"
+reviewer: Codex
+reviewed_at: '2026-09-25T16:00:00+09:00'
 rubric:
-  - rubric_id: RUB-001
-    status: passed
-    report_locators: ["1 目的", "3 結果", "4 考察", "5 結論"]
-    evidence: ["結果節と考察節を分離", "結論が目的と主要結果に対応"]
-    note: "観測、解釈、適用限界の順序を確認した。"
-  - rubric_id: RUB-002
-    status: passed
-    report_locators: ["2 実験方法", "3 結果", "4 考察"]
-    evidence: ["R-001〜R-004", "S-001〜S-003", "C-001〜C-007"]
-    note: "主要主張を生データ、処理、出典へ追跡できる。"
-  - rubric_id: RUB-003
-    status: passed
-    report_locators: ["表紙", "本文全体"]
-    evidence: ["A4・1段組・本文10.5pt", "全3ページ目視", "図表とリストの先行参照"]
-    note: "段落分断、欠け、重なり、未解決参照はない。"
+- rubric_id: RUB-001
+  status: passed
+  report_locators:
+  - 1 目的
+  - 3 結果
+  - 4 考察
+  - 5 結論
+  evidence:
+  - 結果節と考察節を分離
+  - 結論が目的と主要結果に対応
+  note: 観測、解釈、適用限界の順序を確認した。
+- rubric_id: RUB-002
+  status: passed
+  report_locators:
+  - 2 実験方法
+  - 3 結果
+  - 4 考察
+  evidence:
+  - R-001〜R-004
+  - S-001〜S-003
+  - C-001〜C-007
+  note: 主要主張を生データ、処理、出典へ追跡できる。
+- rubric_id: RUB-003
+  status: passed
+  report_locators:
+  - 表紙
+  - 本文全体
+  evidence:
+  - A4・1段組・本文10.5pt
+  - 全3ページ目視
+  - 図表とリストの先行参照
+  note: 段落分断、欠け、重なり、未解決参照はない。
 content_checks:
   requirements_coverage:
     status: passed
-    evidence: "REQ-001、REQ-002、REQ-003を本文、TeX、自動検査で確認した。"
+    evidence: REQ-001、REQ-002、REQ-003を本文、TeX、自動検査で確認した。
   technical_accuracy:
     status: passed
-    evidence: "計測APIと計算量の記述を検証済み出典に限定した。"
+    evidence: 計測APIと計算量の記述を検証済み出典に限定した。
   quantitative_consistency:
     status: passed
-    evidence: "本文、表、図、R-001〜R-004の数値と丸めを照合した。"
+    evidence: 本文、表、図、R-001〜R-004の数値と丸めを照合した。
   argument_quality:
     status: passed
-    evidence: "結果から理論との整合へ進み、証明や因果を断定していない。"
+    evidence: 結果から理論との整合へ進み、証明や因果を断定していない。
   limitations:
     status: passed
-    evidence: "架空データ、入力点数、未評価の環境要因を考察と結論へ明記した。"
+    evidence: 架空データ、入力点数、未評価の環境要因を考察と結論へ明記した。
   source_quality:
     status: passed
-    evidence: "日本語公式を優先し、代替不能箇所だけNISTの英語一次情報を採用した。"
+    evidence: 日本語公式を優先し、代替不能箇所だけNISTの英語一次情報を採用した。
   academic_integrity:
     status: passed
-    evidence: "架空例であることを開示し、実測値として使わない条件を明記した。"
+    evidence: 架空例であることを開示し、実測値として使わない条件を明記した。
   oral_defense:
     status: passed
-    evidence: "O-001〜O-005の回答と根拠を作成し、本人確認済みとした。"
+    evidence: O-001〜O-005の回答と根拠を作成し、本人確認済みとした。
+reviewed_pdf_sha256: a9798f35b47ec2cf89268f6a4a1d4bef32c05edee088912d7e1d43ad6fec9bf2
+reviewed_inputs_digest: 5a94cb3e57bbd4908f68e30afd5d14572cde1c627aaf11fed0186d0104ea5c9b

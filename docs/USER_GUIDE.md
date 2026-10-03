@@ -184,7 +184,7 @@ AI利用規則、開示、本文本人執筆、意味変更の承認条件を記
 要求・採点基準への適合と、技術内容の内部QAを記録する。
 
 `quality/PROFESSOR_REVIEW.yaml`:
-採点基準別1〜5点、根拠、厳しい指摘、改善案、総合点、ready/reviseを機械検査可能に記録する。
+採点基準別の判定、本文位置、根拠、厳しい指摘、改善案、ready/reviseを記録する。教員の尺度と配点が全項目で明示される場合だけ得点と加重総合点を計算し、それ以外は `null` とする。
 
 `PROFESSOR_EVALUATION.md`:
 同じ評価を本人が読める形でまとめる。実際の担当教員の採点ではない。
@@ -198,7 +198,7 @@ python scripts/build_report.py experiments/<id> --mode candidate
 ```
 
 - `skeleton`: PHASE 5後。本文ファイルが存在しても強制的に `（文章N）` を表示する。
-- `draft`: G2後かつ全文章枠が完成したときの確認用。
+- `draft`: G2後。受領・確認済みの文章を反映し、未記入枠を残した途中確認用。
 - `candidate`: PHASE 7合格後の最終候補。G3承認前は提出版ではない。
 
 G3承認後だけ次を実行する。
@@ -237,13 +237,14 @@ python scripts/workflow.py release experiments/<id>
 
 完成候補に対し、G1で確定した全Rubric IDを評価する。各項目に次を必須とする。
 
-- 1〜5点
-- met / partially_met / not_met
+- met / partially_met / not_met / undetermined（任意項目だけ not_applicable も可能）
+- 教員の満点と配点比が全項目で明示される場合だけ得点。それ以外は点数なし
 - レポート内の具体的根拠
 - 教授なら指摘する弱点
 - 改善案
 
 必須項目が `met` でなければ総合判定を `ready` にできず、G3準備を止める。模擬評価であり成績予測ではないことを常に明記する。
+先に現在の候補と証拠から不足を洗い出し、過去の自己採点を根拠にしない。版付き本文レビュー、PDF確認記録、移行方法は [v7の確認と移行](RELIABILITY.md) を参照する。
 
 ## 13. 最終成果物
 

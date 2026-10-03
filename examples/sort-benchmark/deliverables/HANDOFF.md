@@ -38,7 +38,7 @@
 ## 教授視点評価
 
 - `PROFESSOR_EVALUATION.md` に、RUB-001〜RUB-003ごとの根拠、厳しい指摘、改善案を記録した。
-- 模擬評価は93点・提出可能相当だが、架空データと内部基準によるため成績を保証しない。
+- 内部品質基準への適合を確認した。教員配点がないため数値採点は行わない。架空データの実験遂行能力は評価できない。
 
 ## 再生成方法
 
@@ -46,6 +46,10 @@
 python examples/sort-benchmark/analysis/analyze.py
 python scripts/reproduce.py verify examples/sort-benchmark
 python scripts/build_report.py examples/sort-benchmark --mode candidate
+python scripts/render_pdf.py examples/sort-benchmark/build/final-candidate.pdf examples/sort-benchmark/quality/rendered --manifest examples/sort-benchmark/quality/RENDER_MANIFEST.yaml
+# 実際にPDFと内容を確認し、確認記録を更新した後だけ実行する。
+python scripts/workflow.py bind-reviews examples/sort-benchmark
+# G3の確認・架空例専用移行承認を行った後に固定する。
 python scripts/workflow.py release examples/sort-benchmark
 ```
 
@@ -59,3 +63,4 @@ python scripts/workflow.py release examples/sort-benchmark
 - `deliverables/WORKLOG.md`
 
 採点対応と内容品質の詳細は内部の `quality/QUALITY_REVIEW.yaml` に保存した。
+原文との差分は `quality/PROSE_DIFF.md`、PDFの入力接続は `quality/CANDIDATE_BUILD.yaml` に保存した。意味保存と本人執筆自体は機械だけでは証明できない。旧提出一式は `build/release-backups/` に残る。

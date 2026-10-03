@@ -50,6 +50,10 @@ Codexは原文を `prose/original/P-xxx.md`、組版済み本文を `prose/types
 
 詳細は [利用ガイド](docs/USER_GUIDE.md) と `rules/` を参照してください。
 
+文章は一枠ずつ送れます。途中の下書きでは未記入枠を残し、最終候補では全枠の完成を検査します。Codexは原文との差分を示し、意味を変える修正には対象文章の本人承認を求めます。
+
+v7では生成入力・PDF・確認記録の版を照合します。古いPDFや確認記録、再生成していない結果を検査済みとして扱いません。教授視点評価は教員配点がない場合に点数を作らず、不足と根拠を示します。v6以前の実験は [移行・検証手順](docs/RELIABILITY.md) に従って再確認してください。
+
 ## 最終成果物
 
 `experiments/<id>/deliverables/` に次を固定します。
@@ -70,3 +74,5 @@ python scripts/doctor.py
 ```
 
 GitHub Actionsはフレームワーク変更時の手動検査用で、普段のレポート作成には不要です。完成例は `examples/sort-benchmark/` にあり、架空データによる回帰検証専用です。
+
+[骨格PDF](examples/sort-benchmark/preview/skeleton.pdf) / [完成例PDF](examples/sort-benchmark/deliverables/report.pdf) / [v7修正の検証記録](docs/VERIFICATION.md)

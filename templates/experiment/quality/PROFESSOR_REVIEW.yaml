@@ -1,14 +1,17 @@
 evaluator_role: codex_simulated_professor
 reviewed_at: "TODO"
+reviewed_pdf_sha256: null
+reviewed_inputs_digest: null
 rubric:
   - rubric_id: RUB-001
-    score: 1
+    score: null
     verdict: not_met
+    report_locators: ["TODO"]
     evidence: ["TODO"]
     criticism: "TODO"
     improvement: "TODO"
 overall:
-  score_percent: 0
+  score_percent: null
   verdict: revise
   strengths: ["TODO"]
   weaknesses: ["TODO"]

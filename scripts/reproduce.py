@@ -66,6 +66,8 @@ def verify_current(experiment: Path, spec: dict) -> None:
 
 
 def reproduce(experiment: Path, spec: dict) -> None:
+    if not spec.get("commands") or not spec.get("expected_outputs"):
+        raise ValueError("reproduction needs commands and expected outputs")
     verify_current(experiment, spec)
     with tempfile.TemporaryDirectory(prefix="lab-report-reproduce-") as raw:
         replica = Path(raw) / "experiment"
@@ -74,6 +76,11 @@ def reproduce(experiment: Path, spec: dict) -> None:
             replica,
             ignore=shutil.ignore_patterns("build", "deliverables", "rendered", "POLISH_BASELINE.json"),
         )
+        for output in spec["expected_outputs"]:
+            target = safe_path(replica, output["path"])
+            if target.is_relative_to(replica / "data/raw") or target.suffix == ".py":
+                raise ValueError(f"expected output cannot be raw data or code: {output['path']}")
+            target.unlink()  # Never reuse an existing generated output.
         for command in spec.get("commands", []):
             cwd = safe_path(replica, command.get("cwd", "."))
             subprocess.run(resolve_argv(command["argv"]), cwd=cwd, check=True)
