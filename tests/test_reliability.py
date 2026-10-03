@@ -213,6 +213,18 @@ class ReliabilityTests(unittest.TestCase):
             path.write_text(yaml.safe_dump(data, allow_unicode=True), encoding="utf-8")
             self.assertTrue(any("PROFESSOR_REVIEW is not bound" in e for e in validate(exp, 8, candidate=True).errors))
 
+    def test_recorded_g3_survives_removing_ignored_candidate(self):
+        with tempfile.TemporaryDirectory() as raw:
+            exp = self.clone_sample(Path(raw))
+            (exp / "build").mkdir()
+            shutil.copy2(SAMPLE / "deliverables/report.pdf", exp / "build/final-candidate.pdf")
+            shutil.copytree(SAMPLE / "deliverables", exp / "deliverables")
+            self.refresh_gate(exp, "G3")
+            self.assertTrue(approval_current(exp, "G3")[0])
+            (exp / "build/final-candidate.pdf").unlink()
+            # Do not recompute approval after removing build: that masked v6's bug.
+            self.assertTrue(approval_current(exp, "G3")[0], approval_current(exp, "G3"))
+
     def test_failed_release_restores_previous_bytes(self):
         with tempfile.TemporaryDirectory() as raw:
             exp = self.clone_sample(Path(raw))

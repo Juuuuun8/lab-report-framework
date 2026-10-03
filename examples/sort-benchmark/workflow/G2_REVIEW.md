@@ -29,6 +29,5 @@
 
 ## 前回確認からの変更
 
-- @approval/G1
-- @execution-confirmations
-- quality/SKELETON_BUILD.yaml
+
+変更なし。前回の判断材料を再利用できます。

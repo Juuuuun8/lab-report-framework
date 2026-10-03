@@ -42,14 +42,20 @@ gates:
       bytes: 1359
   G2:
     status: approved
-    prepared_at: '2026-10-03T18:39:24+09:00'
-    decided_at: '2026-10-03T18:39:52+09:00'
+    prepared_at: '2026-10-03T19:04:20+09:00'
+    decided_at: '2026-10-03T19:04:21+09:00'
     decided_by: framework_migration
-    decision_text: '承認 G2: v7架空例の骨格・再現性検証'
-    artifact_digest: 2008bf3ced65431b419b4a7c038cec98554442471838164997c0c5c899eaee20
+    decision_text: '承認 G2: v7架空例の取得時照合を含む検証'
+    artifact_digest: a532f525e732e9e0ca75ee9236cb79d6e21237ec69c75ef75b742924f0b5dc9c
     artifact_count: 24
     review_file: workflow/G2_REVIEW.md
     artifacts:
+    - path: '@approval/G1'
+      sha256: 5038d91b24364c8cf60869a9ad930993bb4c957f7cccbf8232b20e99498b44e7
+      bytes: 0
+    - path: '@execution-confirmations'
+      sha256: 866bb8f3fb101b3902bff71b3619a45d909d0414d0974d3ec7aa2aea67b5893c
+      bytes: 61
     - path: RESULT_TRACEABILITY.md
       sha256: 9281023f7dc6fffe2352a72622982eca9fe9318d57df6b708759e0851f72cf54
       bytes: 985
@@ -116,22 +122,22 @@ gates:
     - path: spec/WRITING_PLAN.yaml
       sha256: b61d2a9887013235dea04579b5e2f8447385dcc13be3e70effa6c0956b514b7a
       bytes: 3166
-    - path: '@approval/G1'
-      sha256: 5038d91b24364c8cf60869a9ad930993bb4c957f7cccbf8232b20e99498b44e7
-      bytes: 0
-    - path: '@execution-confirmations'
-      sha256: 866bb8f3fb101b3902bff71b3619a45d909d0414d0974d3ec7aa2aea67b5893c
-      bytes: 61
   G3:
     status: approved
-    prepared_at: '2026-10-03T18:44:13+09:00'
-    decided_at: '2026-10-03T18:44:14+09:00'
+    prepared_at: '2026-10-03T19:04:24+09:00'
+    decided_at: '2026-10-03T19:04:25+09:00'
     decided_by: framework_migration
-    decision_text: '承認 G3: v7架空例の全ページ・差分・定性的評価を検証'
-    artifact_digest: d190bf24c6c6fd416537a9dbab48add07305df37edb7e12be0b831a131063dd1
+    decision_text: '承認 G3: v7架空例の入力・PDF・取得時照合を検証'
+    artifact_digest: d37096f628c1a714a9e8555eadf2060011b9ebbc76767a449b4b4b2a54eb48eb
     artifact_count: 45
     review_file: workflow/G3_REVIEW.md
     artifacts:
+    - path: '@approval/G1'
+      sha256: 5038d91b24364c8cf60869a9ad930993bb4c957f7cccbf8232b20e99498b44e7
+      bytes: 0
+    - path: '@approval/G2'
+      sha256: a532f525e732e9e0ca75ee9236cb79d6e21237ec69c75ef75b742924f0b5dc9c
+      bytes: 0
     - path: HANDOFF.md
       sha256: 024e9d52df0461a6b280dba604e25f7f9a8c6c93a0d27d5c06ccabba5b1d8a4b
       bytes: 3653
@@ -261,11 +267,5 @@ gates:
     - path: spec/WRITING_PLAN.yaml
       sha256: bbbce36b97005c83845932a69e06179701012d2e1b23671304444b801bcff3a5
       bytes: 9903
-    - path: '@approval/G1'
-      sha256: 5038d91b24364c8cf60869a9ad930993bb4c957f7cccbf8232b20e99498b44e7
-      bytes: 0
-    - path: '@approval/G2'
-      sha256: 2008bf3ced65431b419b4a7c038cec98554442471838164997c0c5c899eaee20
-      bytes: 0
-released_at: '2026-10-03T18:44:20+09:00'
+released_at: '2026-10-03T19:04:31+09:00'
 release_sha256: a9798f35b47ec2cf89268f6a4a1d4bef32c05edee088912d7e1d43ad6fec9bf2

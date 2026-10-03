@@ -30,19 +30,4 @@
 
 ## 前回確認からの変更
 
-- @approval/G1
 - @approval/G2
-- HANDOFF.md
-- PROFESSOR_EVALUATION.md
-- RESULT_TRACEABILITY.md
-- SOURCE_AUDIT.md
-- WORKLOG.md
-- build/final-candidate.pdf
-- quality/CANDIDATE_BUILD.yaml
-- quality/FINAL_CHECK.yaml
-- quality/PROFESSOR_REVIEW.yaml
-- quality/PROSE_DIFF.md
-- quality/QUALITY_REVIEW.yaml
-- quality/RENDER_MANIFEST.yaml
-- spec/ACADEMIC_INTEGRITY.yaml
-- spec/WRITING_PLAN.yaml

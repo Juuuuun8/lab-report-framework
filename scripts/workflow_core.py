@@ -202,8 +202,9 @@ def gate_manifest(experiment: Path, gate: str) -> list[dict[str, object]]:
                 "sha256": digest,
                 "bytes": size,
             })
-            manifest.sort(key=lambda item: str(item["path"]))
-    return manifest
+    # The real candidate and its released fallback must use identical ordering,
+    # including synthetic upstream approval entries.
+    return sorted(manifest, key=lambda item: str(item["path"]))
 
 
 def manifest_digest(manifest: list[dict[str, object]]) -> str:
