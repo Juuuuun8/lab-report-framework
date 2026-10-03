@@ -5,6 +5,18 @@
   "additionalProperties": false,
   "required": ["evaluator_role", "reviewed_at", "reviewed_pdf_sha256", "reviewed_inputs_digest", "rubric", "overall", "limitations"],
   "properties": {
+    "task_scope_reviews": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["task_id", "status", "evidence"],
+        "properties": {
+          "task_id": {"type": "string", "pattern": "^TASK-[0-9]{3}$"},
+          "status": {"enum": ["passed", "failed", "pending"]},
+          "evidence": {"type": "string", "minLength": 1}
+        }
+      }
+    },
     "evaluator_role": {"const": "codex_simulated_professor"},
     "reviewed_at": {"type": "string", "minLength": 10},
     "reviewed_pdf_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},

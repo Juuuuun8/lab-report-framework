@@ -47,7 +47,7 @@ def load_yaml(path: Path) -> dict:
 
 def initial_state(example: bool = False) -> dict:
     return {
-        "version": 1,
+        "version": 2,
         "current_gate": "G1",
         "status": "preparing",
         "example_only": example,
@@ -150,20 +150,20 @@ USER_CHECKS = {
     "G1": [
         "課題の解釈、提出条件、表紙情報に誤りがないか。",
         "採点基準の抽出内容と、各基準の合格条件に誤りがないか。",
-        "AI利用範囲が授業規則に反していないか。",
+        "AI利用規則と課題別の既習範囲・先取り禁止・指定手法に誤りがないか（spec/ASSIGNMENT_REQUIREMENTS.yaml の task_scopes）。",
         "実験条件、反復回数、除外基準を実際に実行できるか。",
     ],
     "G2": [
         "生データが実際に行った実験・作業のものか。",
         "失敗、除外、再実験、環境情報に誤りがないか。",
-        "見出し、図表、数式、コード、文章枠の順序が書きたい論理に合うか。",
+        "課題別の見出し・図表・コード・コメントが学習範囲と指定に合い、後の課題の解法・結果を先取りしていないか。",
         "各（文章N）の執筆メモと、主要結果・考察の方向を採用してよいか。",
     ],
     "G3": [
         "氏名、学生番号、科目名、日付が正しいか。",
         "PDFの見た目、図表、文字、改ページに問題がないか。",
         "本文が自分の原文に基づき、意味を変える未承認修正がないか。",
-        "教授視点評価の弱点を理解し、それでも提出してよいか。",
+        "教授視点評価の課題別範囲・指定・説明可能性の確認と弱点を理解し、提出してよいか。",
         "この最終候補を提出用PDFへ確定してよいか。",
     ],
 }
@@ -201,6 +201,20 @@ def build_review(experiment: Path, gate: str, manifest: list[dict], previous: li
         lines.extend(["## 前回確認からの変更", "", *[f"- {name}" for name in changed], ""])
         if not changed:
             lines.append("変更なし。前回の判断材料を再利用できます。")
+    if gate == "G1":
+        tasks = load_yaml(experiment / "spec/ASSIGNMENT_REQUIREMENTS.yaml").get("task_scopes", [])
+        lines.extend(["", "## 課題別の学習範囲", ""])
+        if not tasks:
+            lines.append("旧形式・未設定。学習範囲への準拠は確認済みではありません。")
+        for task in tasks:
+            lines.extend([f"### {task['task_id']}: {task['title']}", "", f"実習書の範囲: {task['instruction_scope']}",
+                          "前提課題: " + (", ".join(task["prior_task_ids"]) or "なし"),
+                          "使用する知識・手法: " + " / ".join(task["allowed_knowledge"]),
+                          "持ち込まない内容: " + (" / ".join(task["excluded_knowledge"]) or "追加制限なし"),
+                          "指定条件: " + ", ".join(task["requirement_ids"]),
+                          "提出コード: " + (", ".join(task["submission_code"]) or "なし"),
+                          "補助コード: " + (", ".join(task["helper_code"]) or "なし"),
+                          "コメント: " + task["comment_policy"], ""])
     return "\n".join(lines)
 
 
@@ -262,12 +276,13 @@ def content_hash(path: Path) -> str:
 def next_actions(experiment: Path) -> list[str]:
     """Read-only resumption summary; never substitute it for a gate audit."""
     state = load_state(experiment)
+    scope_note = [] if load_yaml(experiment / "spec/ASSIGNMENT_REQUIREMENTS.yaml").get("task_scopes") else ["学習範囲: 未設定。課題別の先取り防止は確認済みではありません。"]
     for gate in ("G1", "G2"):
         ok, reason = approval_current(experiment, gate)
         if not ok:
             awaiting = state["gates"][gate]["status"] == "awaiting_user"
             unchanged = gate_digest(experiment, gate)[0] == state["gates"][gate].get("artifact_digest")
-            return [f"次: {gate}の本人判断を待つ" if awaiting and unchanged else f"次: {gate}の確認材料を準備・更新する",
+            return scope_note + [f"次: {gate}の本人判断を待つ" if awaiting and unchanged else f"次: {gate}の確認材料を準備・更新する",
                     f"理由: {reason}", f"読む場所: workflow/{gate}_REVIEW.md / " +
                     ("spec/ASSIGNMENT_REQUIREMENTS.yaml / spec/EXPERIMENT_PLAN.yaml" if gate == "G1" else "spec/WRITING_PLAN.yaml / RESULT_TRACEABILITY.md")]
     plan = load_yaml(experiment / "spec/WRITING_PLAN.yaml")
@@ -295,7 +310,7 @@ def next_actions(experiment: Path) -> list[str]:
             waiting = g3["status"] == "awaiting_user" and gate_digest(experiment, "G3")[0] == g3.get("artifact_digest")
             lines += ["次: G3の本人判断を待つ" if waiting else "次: 候補PDFと変更に影響する確認記録を更新し、G3を準備する",
                       "読む場所: quality/PROSE_CHANGES.md / build/final-candidate.pdf / quality/FINAL_CHECK.yaml / quality/PROFESSOR_REVIEW.yaml"]
-    return lines
+    return scope_note + lines
 
 
 def main() -> int:

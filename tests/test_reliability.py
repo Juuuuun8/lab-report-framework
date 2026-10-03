@@ -20,6 +20,7 @@ from workflow import initial_state
 from workflow_core import write_state
 from receive_prose import receive
 from report_views import generate, sync_rubric
+import scope_fixture
 
 
 class ReliabilityTests(unittest.TestCase):
@@ -262,6 +263,7 @@ class ReliabilityTests(unittest.TestCase):
             self.assertTrue(validate(exp, 2).errors)
             for name in ("REPORT_META", "USER_DECISIONS", "ASSIGNMENT_REQUIREMENTS", "CONTEXT_INDEX", "EXPERIMENT_PLAN"):
                 shutil.copy2(SAMPLE / "spec" / f"{name}.yaml", exp / "spec" / f"{name}.yaml")
+            scope_fixture.set_field(exp, "spec/ASSIGNMENT_REQUIREMENTS.yaml", "task_scopes", [scope_fixture.task()])
             for name in ("instructions",):
                 shutil.copytree(SAMPLE / name, exp / name, dirs_exist_ok=True)
             shutil.copy2(SAMPLE / "QUESTIONS.md", exp / "QUESTIONS.md")
@@ -289,7 +291,9 @@ class ReliabilityTests(unittest.TestCase):
             plan_path = exp / "spec/WRITING_PLAN.yaml"
             plan = yaml.safe_load(plan_path.read_text(encoding="utf-8"))
             plan["status"] = "skeleton_ready"
+            plan["task_scope_reviews"] = scope_fixture.reviews()
             for slot in plan["slots"]:
+                slot["task_ids"] = ["TASK-001"]
                 slot.update(authorship="user", status="awaiting_user", original_sha256=None, proofread_notes=None)
                 slot.pop("review", None)
             plan_path.write_text(yaml.safe_dump(plan, allow_unicode=True), encoding="utf-8")
@@ -327,6 +331,7 @@ class ReliabilityTests(unittest.TestCase):
             command(build, exp, "--mode", "candidate")
             for name in ("FINAL_CHECK", "QUALITY_REVIEW", "PROFESSOR_REVIEW"):
                 shutil.copy2(SAMPLE / "quality" / f"{name}.yaml", exp / "quality" / f"{name}.yaml")
+            scope_fixture.set_field(exp, "quality/PROFESSOR_REVIEW.yaml", "task_scope_reviews", scope_fixture.reviews())
             generate(exp, "evaluation", replace_legacy=True)
             sync_rubric(exp)
             command(ROOT / "scripts/render_pdf.py", exp / "build/final-candidate.pdf", exp / "quality/rendered", "--manifest", exp / "quality/RENDER_MANIFEST.yaml")

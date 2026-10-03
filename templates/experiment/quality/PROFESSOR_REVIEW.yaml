@@ -1,4 +1,6 @@
 evaluator_role: codex_simulated_professor
+task_scope_reviews:
+  - {task_id: TASK-001, status: pending, evidence: "TODO: 完成稿の課題別範囲・指定・説明可能性の確認箇所と判断"}
 reviewed_at: "TODO"
 reviewed_pdf_sha256: null
 reviewed_inputs_digest: null

@@ -1,3 +1,14 @@
+task_scopes:
+  - task_id: TASK-001
+    title: "TODO: 課題名。複数課題は実習書の順に追加する"
+    instruction_scope: "TODO: この課題までの実習書の節・ページと既習事項の出典"
+    prior_task_ids: []
+    allowed_knowledge: ["TODO: 使用する知識・手法・ライブラリ"]
+    excluded_knowledge: ["TODO: 後の課題の内容、未許可の手法"]
+    requirement_ids: [REQ-001]
+    submission_code: []
+    helper_code: []
+    comment_policy: "TODO: 指定を優先。目的・理由・前提・境界条件を必要な場所に簡潔に記す"
 assignment:
   course: "TODO"
   title: "TODO"

@@ -8,6 +8,10 @@
 
 ## 骨格と執筆案内
 
+`ASSIGNMENT_REQUIREMENTS.yaml.task_scopes` に課題ごとの実習書範囲、既習事項、後続内容の除外、指定条件、提出コード・補助コード、コメント方針を記す。G1でまとめて確認し、各文章枠の `task_ids` へ対応付ける。実習書全体の規則を読むことと、解答に先の内容を使うことは別である。
+
+骨格時は `WRITING_PLAN.yaml.task_scope_reviews`、完成時は `PROFESSOR_REVIEW.yaml.task_scope_reviews` に、対象箇所と範囲内と判断した根拠を記す。新しい承認は増やさない。許可済みの既習知識は実習書外でも使えるが、不明な事項だけ最初に相談する。
+
 G2準備時に `workflow/WRITING_BRIEF.md` を生成する。各枠には説明する対象、使える証拠、本人が考える点を示す。必要な枠だけ `WRITING_PLAN.yaml` の `student_judgment` に問いを書く。結論や回答例は代筆しない。結果の値は `RESULT_TRACEABILITY.md`、出典箇所は `SOURCE_AUDIT.md` を確認する。
 
 ## 本文をまとめて受領・差し替え

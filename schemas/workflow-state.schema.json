@@ -5,7 +5,7 @@
   "additionalProperties": false,
   "required": ["version", "current_gate", "status", "example_only", "gates"],
   "properties": {
-    "version": {"const": 1},
+    "version": {"enum": [1, 2]},
     "current_gate": {"enum": ["G1", "G2", "G3", "complete"]},
     "status": {"enum": ["preparing", "awaiting_user", "executing", "approved", "released"]},
     "example_only": {"type": "boolean"},

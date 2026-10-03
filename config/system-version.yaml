@@ -1,6 +1,7 @@
-version: "7.1.0"
+version: "7.2.0"
 workflow: "three-gate-user-authored-prose"
 released_at: "2026-10-03"
 compatibility:
-  experiment_schema: 5
+  experiment_schema: 6
+  workflow_state: 2
   style_contract_revision: 2

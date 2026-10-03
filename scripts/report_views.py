@@ -18,8 +18,14 @@ def render(experiment: Path, view: str) -> str:
     lines = [MARKER, ""]
     if view == "writing":
         lines += ["# 執筆案内", "", "本文と考察は本人が書きます。以下は説明する対象と証拠の案内であり、回答例ではありません。", ""]
+        for t in load(experiment, "spec/ASSIGNMENT_REQUIREMENTS.yaml").get("task_scopes", []):
+            lines += [f"## {t['task_id']}: {t['title']}", "", f"実習書の範囲: {t['instruction_scope']}",
+                      "使用する知識・手法: " + " / ".join(t["allowed_knowledge"]),
+                      "持ち込まない内容: " + (" / ".join(t["excluded_knowledge"]) or "追加制限なし。後続課題の解法・結果は持ち込まない。"),
+                      "指定条件: " + ", ".join(t["requirement_ids"]), f"コメント方針: {t['comment_policy']}", ""]
         for s in load(experiment, "spec/WRITING_PLAN.yaml")["slots"]:
             lines += [f"## {s['display_label']} — {s['section']}", "", f"説明すること: {s['purpose']}",
+                      "対象課題: " + (", ".join(s.get("task_ids", [])) or "旧形式・未設定"),
                       "扱う論点: " + " / ".join(s["required_points"]),
                       "使える証拠: " + (", ".join(s["evidence_ids"]) or "実習書・本人の実施記録"),
                       "参照する図表・式: " + (", ".join(s["planned_references"]) or "なし"),
@@ -45,6 +51,8 @@ def render(experiment: Path, view: str) -> str:
                       "根拠: " + " / ".join(r["evidence"]), f"指摘: {r['criticism']}", f"改善案: {r['improvement']}",
                       "点数: " + (str(r["score"]) if r["score"] is not None else "採点しない（尺度・配点なし）"), ""]
         o = p["overall"]
+        for r in p.get("task_scope_reviews", []):
+            lines += [f"## 学習範囲 {r['task_id']}: {r['status']}", "", r["evidence"], ""]
         lines += [f"総合判断: {o['verdict']}", "総合点: " + (str(o["score_percent"]) if o["score_percent"] is not None else "なし"),
                   "強み: " + " / ".join(o["strengths"]), "弱点: " + " / ".join(o["weaknesses"]), "", p["limitations"], ""]
     else:

@@ -147,10 +147,12 @@ def gate_fingerprint(experiment: Path, gate: str, path: Path) -> tuple[str, int]
                         "rubric_ids",
                         "authorship",
                     )
-                } | ({"student_judgment": slot["student_judgment"]} if "student_judgment" in slot else {})
+                } | {key: slot[key] for key in ("student_judgment", "task_ids") if key in slot}
                 for slot in data.get("slots", [])
             ],
         }
+        if "task_scope_reviews" in data:
+            stable["task_scope_reviews"] = data["task_scope_reviews"]
         payload = yaml.safe_dump(stable, allow_unicode=True, sort_keys=True).encode("utf-8")
         return hashlib.sha256(payload).hexdigest(), len(payload)
     return content_fingerprint(path)
@@ -158,6 +160,19 @@ def gate_fingerprint(experiment: Path, gate: str, path: Path) -> tuple[str, int]
 
 def gate_files(experiment: Path, gate: str) -> list[Path]:
     files: list[Path] = []
+    if gate == "G2":
+        requirements_path = experiment / "spec/ASSIGNMENT_REQUIREMENTS.yaml"
+        if requirements_path.is_file():
+            requirements = yaml.safe_load(requirements_path.read_text(encoding="utf-8")) or {}
+            for task in requirements.get("task_scopes", []):
+                for name in task.get("submission_code", []) + task.get("helper_code", []):
+                    path = experiment / name
+                    try:
+                        path.resolve().relative_to(experiment.resolve())
+                    except ValueError:
+                        continue  # The phase validator reports unsafe paths.
+                    if path.is_file():
+                        files.append(path)
     for relative in GATE_PATHS[gate]:
         candidate = experiment / relative
         if candidate.is_file():

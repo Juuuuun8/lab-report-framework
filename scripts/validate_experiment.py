@@ -18,6 +18,7 @@ from review_prose import paths as prose_paths, review_errors
 from tex_sources import document_text, strip_comments
 from report_views import freshness_errors, rubric_projection
 from layout_tuning import settings as layout_settings
+from task_scope import check_tasks, check_reviews as check_task_reviews
 
 
 PLACEHOLDER = re.compile(r"\bTODO\b|指定待ち|未確認|未実施|\{\{.+?\}\}")
@@ -401,6 +402,7 @@ def validate(experiment: Path, phase: int, candidate: bool = False, skeleton: bo
         unique_ids(reqs, "requirement_id", audit, 1)
         unique_ids(rubrics, "rubric_id", audit, 1)
         audit.require(not PLACEHOLDER.search(str(requirements)), "PHASE 1: assignment requirements contain placeholders")
+        check_tasks(experiment, requirements, workflow_state, audit, phase)
 
         ai_use = integrity.get("ai_use", {})
         audit.require(ai_use.get("status") not in {None, "unknown"}, "PHASE 1: AI-use policy must be resolved before work starts")
@@ -528,6 +530,7 @@ def validate(experiment: Path, phase: int, candidate: bool = False, skeleton: bo
             require_prose=False,
             example_only=workflow_state.get("example_only") is True,
         )
+        check_task_reviews(requirements, writing_plan, audit, "skeleton")
         rubric_ids = {item.get("rubric_id") for item in requirements.get("rubric_criteria", [])}
         evidence_ids = source_ids | result_ids | claim_ids
         for slot in writing_plan.get("slots", []):
@@ -620,6 +623,7 @@ def validate(experiment: Path, phase: int, candidate: bool = False, skeleton: bo
 
         quality = load_structured(experiment, "quality/QUALITY_REVIEW.yaml", audit)
         professor = load_structured(experiment, "quality/PROFESSOR_REVIEW.yaml", audit)
+        check_task_reviews(requirements, professor, audit, "final")
         audit.errors.extend(freshness_errors(experiment, "evaluation"))
         if quality.get("rubric_source") == "professor_review":
             try:

@@ -29,6 +29,7 @@ G1は `ACADEMIC_INTEGRITY.yaml` の規則・本人執筆契約を固定し、後
 - 採点基準がなければ、内部品質基準で代用することを明記し、本人確認する。
 - AI利用規則と「本文は本人だけが書く」契約を確定する。
 - 最初に確認できる事項をまとめて質問し、回答を保存する。
+- `task_scopes` に課題別の範囲、前提、使用・除外する知識、指定の参照、コードの役割、コメント方針を記し、G1の既存確認へ含める。
 
 ## PHASE 2: 実験計画
 
@@ -54,6 +55,7 @@ G1は `ACADEMIC_INTEGRITY.yaml` の規則・本人執筆契約を固定し、後
 - 外部主張を列挙し、優先順位に従って出典本文を開き、内容一致を検証する。
 - 実習書指定の見出し、図表、数式、コード、参考文献をTeXへ配置する。
 - `WRITING_PLAN.yaml` で各 `（文章N）` に目的、必須論点、Evidence ID、Rubric IDを割り当てる。
+- 各枠の `task_ids` で対象課題を指定し、全課題を網羅する。`task_scope_reviews` で各課題の骨格・コード・コメントを実際に照合し、根拠とpassed/failed/pendingを記す。未確認・範囲外ならG2へ進めない。
 - `student_judgment` は必要な枠だけに本人への考察の問いを書く。問いを増やすために全枠へ追加しない。G2準備時に `workflow/WRITING_BRIEF.md` を自動生成する。数値は `RESULT_TRACEABILITY.md`、引用箇所は `SOURCE_AUDIT.md` を参照し、案内へ重複転記しない。
 - 出典本文を確認して `SOURCES.yaml` / `CLAIMS.yaml` を記録した後、`report_views.py <path> sources` で監査表を生成する。生成は出典検証の代替ではない。
 - `python scripts/build_report.py <path> --mode skeleton` で骨格PDFを作り、G2で本人確認する。
@@ -83,6 +85,7 @@ G1は `ACADEMIC_INTEGRITY.yaml` の規則・本人執筆契約を固定し、後
 - 教員提供の各基準に `max_score`（満点）と `weight`（配点比）が揃う場合だけ点数を記し、総合点を `100 × Σ(score/max_score × weight) / Σweight` で計算する。重みは正値に限る。内部基準または配点不明なら全点数を `null` にし、定性的に評価する。
 - `quality/CANDIDATE_BUILD.yaml` は現在の入力とPDFの一致を示す。全ページ確認と内容・教授視点評価を行った後、`workflow.py bind-reviews` で確認対象の版を記録する。再生成後は確認対象が一致するか再検査し、古い確認記録を流用しない。
 - 必須基準が未達なら `ready` にせず、修正へ戻す。
+- 教授評価の `task_scope_reviews` で課題ごとの学習範囲、指定、先取り、コメント、本人の説明可能性を完成稿に対して確認する。各課題がpassedで根拠がある場合だけG3へ進む。
 - 任意基準の未達は評価に残して本人が追加改善を判断する。誤りや必須違反と任意の提案を区別し、任意改善を無限に続けない。欠点がなければ「追加指摘なし」「対応不要」と記し、架空の減点要因を作らない。
 - `report_views.py <path> evaluation --sync-rubric` で教授評価の説明資料と品質記録の採点対応を生成する。その後、実際の確認対象に `bind-reviews` を行う。同期はPDF目視・技術チェックを合格にしない。
 - `HANDOFF.md` はこの段階でまとめる。候補PDFの初回生成前に完成した引継ぎ文書を要求しない。
